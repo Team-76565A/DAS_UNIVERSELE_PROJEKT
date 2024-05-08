@@ -1,6 +1,7 @@
 #include "pros/llemu.hpp"
 #include "pros/motors.h"
 #include "pros/motors.hpp"
+#include "pros/rtos.hpp"
 #include <iostream>
 
 using namespace std;
@@ -43,30 +44,11 @@ int convertUnits(int parameter, string fromUnit, string toUnit, float Circumfere
 
 
 
-//int moveCentimeter(Motor_Group Drive, float centimeter, int velocity)
-//{
+/*void MoveCentimeter(pros::Motor_Group i, float centimeter, int velocity)
+{
 
 
-    //Drive.move_relative(convertUnits(centimeter, "cm,", "rotations"), velocity);
-
-    /*Drive.move_relative(const double position, const std::int32_t velocity)*/
-
-    /*
-    *   Does not work => it only work's with normal pros::Motor not with pros::Motor_Group
-    *
-    */
-    /*
-    if (Motor.get_encoder_units() == pros::E_MOTOR_ENCODER_ROTATIONS) 
-    {
-    Motor.move_relative(convertUnits(centimeter, "cm,", "rotations"), velocity);
-    return 0;
-    }
-    else if (Motor.get_encoder_units() == pros::E_MOTOR_ENCODER_DEGREES) 
-    {
-        Motor.move_relative(convertUnits(centimeter, "cm,", "degress"), velocity);
-        return 0;
-    }
-    */
-    //return 1;
+    //i.move_relative(convertUnits(centimeter, "cm,", "rotations"), velocity);
     
-//}
+}
+*/
