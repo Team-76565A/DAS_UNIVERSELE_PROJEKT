@@ -1,9 +1,14 @@
 #include "main.h"
-#include "Functions/Functions.cpp"
+#include "Functions/convertUnits.cpp"
+#include "pros/adi.hpp"
 #include "pros/motors.hpp"
 
 using namespace pros;
 
+//Controller
+Controller controller (E_CONTROLLER_MASTER);
+
+//Motoren
 Motor LBWheel(1, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
 Motor LMWheel(10, pros::E_MOTOR_GEARSET_18, false,pros::E_MOTOR_ENCODER_ROTATIONS);
 Motor LFWheel(3, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
@@ -11,9 +16,13 @@ Motor RBWheel(4, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS
 Motor RMWheel(5, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
 Motor RFWheel(6, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
 
+//Motor Groups
 Motor_Group Drive({LBWheel, LFWheel, LMWheel, RBWheel, RFWheel, RMWheel});
 Motor_Group LeftSide({LBWheel, LFWheel, LMWheel});
 Motor_Group RightSide({RBWheel, RFWheel, RMWheel});
+
+//Sensoren
+ADIGyro gyro('A');
 
 /**
  * A callback function for LLEMU's center button.
@@ -66,7 +75,6 @@ void competition_initialize() {}
  */
 void autonomous() 
 {	
-
 	Drive.move_absolute(convertUnits(100, "cm", "rotations"), 50);
 }
 
