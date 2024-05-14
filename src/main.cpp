@@ -1,7 +1,10 @@
 #include "main.h"
-#include "Functions/convertUnits.cpp"
+#include "Functions/cmConvertor.cpp"
+#include "Functions/P-Regler.cpp"
+#include "Functions/degConvertorTurn.cpp"
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
+#include "pros/rtos.h"
 
 using namespace pros;
 
@@ -24,6 +27,10 @@ Motor_Group RightSide({RBWheel, RFWheel, RMWheel});
 //Sensoren
 ADIGyro gyro('A');
 
+//floats
+float turnSpeed = 0;
+float headingOffset;
+
 /**
  * A callback function for LLEMU's center button.
  *
@@ -39,9 +46,23 @@ ADIGyro gyro('A');
  */
 void initialize() {
 	pros::lcd::initialize();
-
+	gyro.reset();
 	autonomous();
 
+}
+
+void drehenAufGrad(float wunschHeading)
+{	
+	controller.rumble("--");
+	//headingOffset = gyro.get_value() - wunschHeading;
+	controller.clear();
+	controller.print(1, 1, "f%",  gyro.get_value());
+	while(!(headingOffset >= headingOffset - 1 && headingOffset <= headingOffset + 1))	{
+		controller.rumble("..");
+		turnSpeed = turnToHeading(wunschHeading, gyro, controller);
+		LeftSide.move_absolute(degConvertorTurn(wunschHeading, gyro), turnSpeed);
+		RightSide.move_absolute(degConvertorTurn(wunschHeading, gyro), turnSpeed);
+	}
 }
 
 /**
@@ -75,7 +96,12 @@ void competition_initialize() {}
  */
 void autonomous() 
 {	
-	Drive.move_absolute(convertUnits(100, "cm", "rotations"), 50);
+	//Drive.move_absolute(convertUnits(100, "cm", "rotations"), 50);
+	c::delay(1000);
+	drehenAufGrad(290);
+	Drive.move_absolute(2, 100);
+	
+	
 }
 
 /**
