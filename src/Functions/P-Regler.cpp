@@ -22,7 +22,8 @@ float turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor 
     float currentHeading;
     float HeadingOffset;
     controller.rumble(".--.");
-    while(Gyro.heading(degrees) < SollHeading - 0.8 || Gyro.heading(degrees) > SollHeading + 0.8)
+    while(gyro.get_value() < toHeading - 0.8 || gyro.get_value() > toHeading + 0.8)
+    {
         currentHeading = gyro.get_value();
         HeadingOffset = currentHeading - toHeading;
         if(HeadingOffset > 0 && HeadingOffset < 181)
@@ -57,7 +58,7 @@ float turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor 
             
         }
     
-    
+    }
     controller.rumble("---");
     return TurnSpeed;
 }
