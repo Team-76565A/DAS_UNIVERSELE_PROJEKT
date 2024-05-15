@@ -8,7 +8,13 @@ using namespace std;
 using namespace pros;
 
 
-int convertUnits(int parameter, string fromUnit, string toUnit, float CircumferenceInCm = 31.91)
+/*
+* Converts units
+* your parameter ist given now you have to give the unit from 
+* your parameter => fromUnit
+* which unit do you want? => toUnit
+*/
+float convertUnits(int parameter, string fromUnit, string toUnit, float CircumferenceInCm = 31.91)
 {
     if (fromUnit == "cm")
     {

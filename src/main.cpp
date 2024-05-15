@@ -27,6 +27,7 @@ Motor_Group RightSide({RBWheel, RFWheel/*, RMWheel*/});
 //Sensoren
 ADIGyro gyro('A');
 
+
 //floats
 float turnSpeed = 0;
 float headingOffset;
@@ -55,7 +56,6 @@ void drehenAufGrad(float toHeading)
 {	
 
 	turnToHeading(toHeading, gyro, controller, LBWheel, LFWheel, RBWheel, RFWheel);
-
 	/*controller.rumble("--");
 	//headingOffset = gyro.get_value() - wunschHeading;
 	controller.clear();
@@ -99,7 +99,6 @@ void competition_initialize() {}
  */
 void autonomous() 
 {	
-	//Drive.move_absolute(convertUnits(100, "cm", "rotations"), 50);
 	c::delay(1000);
 	drehenAufGrad(290);
 	Drive.move_absolute(2, 100);
@@ -119,5 +118,5 @@ void autonomous()
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	
+
 }

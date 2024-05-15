@@ -10,7 +10,9 @@
 using namespace std;
 using namespace pros;
 
-
+/*
+* Ein P-Regler
+*/
 float turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2) {
 
     Motor_Group RightSide({Right1, Right2});
