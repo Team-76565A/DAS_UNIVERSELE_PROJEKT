@@ -9,7 +9,9 @@
 using namespace std;
 using namespace pros;
 
-//conversion von degrees zu Turns
+/*
+* conversion von degrees zu Turns
+*/
 float degConvertorTurn(float toHeading, ADIGyro gyro)
 {
     float headingOffset;
@@ -23,3 +25,4 @@ float degConvertorTurn(float toHeading, ADIGyro gyro)
     
     return Turns;
 }
+

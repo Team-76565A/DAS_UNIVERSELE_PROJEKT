@@ -1,7 +1,7 @@
 #include "main.h"
-#include "Functions/cmConvertor.cpp"
-#include "Functions/P-Regler.cpp"
-#include "Functions/degConvertorTurn.cpp"
+#include "src/cmConvertor.cpp"
+#include "src/degConvertorTurn.cpp"
+#include "src/P-Regler.cpp"
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
 #include "pros/rtos.h"
@@ -103,8 +103,6 @@ void autonomous()
 	c::delay(1000);
 	drehenAufGrad(290);
 	Drive.move_absolute(2, 100);
-	
-	
 }
 
 /**
