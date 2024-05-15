@@ -13,16 +13,16 @@ Controller controller (E_CONTROLLER_MASTER);
 
 //Motoren
 Motor LBWheel(1, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor LMWheel(10, pros::E_MOTOR_GEARSET_18, false,pros::E_MOTOR_ENCODER_ROTATIONS);
+//Motor LMWheel(10, pros::E_MOTOR_GEARSET_18, false,pros::E_MOTOR_ENCODER_ROTATIONS);
 Motor LFWheel(3, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
 Motor RBWheel(4, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor RMWheel(5, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
+//Motor RMWheel(5, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
 Motor RFWheel(6, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
 
 //Motor Groups
-Motor_Group Drive({LBWheel, LFWheel, LMWheel, RBWheel, RFWheel, RMWheel});
-Motor_Group LeftSide({LBWheel, LFWheel, LMWheel});
-Motor_Group RightSide({RBWheel, RFWheel, RMWheel});
+Motor_Group Drive({LBWheel, LFWheel, /*LMWheel,*/ RBWheel, RFWheel/*, RMWheel*/});
+Motor_Group LeftSide({LBWheel, LFWheel/*, LMWheel*/});
+Motor_Group RightSide({RBWheel, RFWheel/*, RMWheel*/});
 
 //Sensoren
 ADIGyro gyro('A');
@@ -51,9 +51,12 @@ void initialize() {
 
 }
 
-void drehenAufGrad(float wunschHeading)
+void drehenAufGrad(float toHeading)
 {	
-	controller.rumble("--");
+
+	turnToHeading(toHeading, gyro, controller, LBWheel, LFWheel, RBWheel, RFWheel);
+
+	/*controller.rumble("--");
 	//headingOffset = gyro.get_value() - wunschHeading;
 	controller.clear();
 	controller.print(1, 1, "f%",  gyro.get_value());
@@ -62,7 +65,7 @@ void drehenAufGrad(float wunschHeading)
 		turnSpeed = turnToHeading(wunschHeading, gyro, controller);
 		LeftSide.move_absolute(degConvertorTurn(wunschHeading, gyro), turnSpeed);
 		RightSide.move_absolute(degConvertorTurn(wunschHeading, gyro), turnSpeed);
-	}
+	}*/
 }
 
 /**
