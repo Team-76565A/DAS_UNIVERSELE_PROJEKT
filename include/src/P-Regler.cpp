@@ -64,3 +64,27 @@ float turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor 
     controller.rumble("---");
     return TurnSpeed;
 }
+
+void testfunktion(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2){
+
+    float turnSpeed = 0;
+    float maxTurnSpeed = 200;
+    float currentHeading;
+    float headingOffset;
+    float headingOffsetSum;
+
+    float oldHeadingOffset;
+
+    float kp;
+    float ki;
+    float kd;
+
+    while (headingOffset == 0) {
+        headingOffset = currentHeading - toHeading;
+        headingOffsetSum += headingOffset;
+
+        turnSpeed = kp*headingOffset + ki*0*headingOffsetSum + kd/0*(headingOffset - oldHeadingOffset);
+
+        oldHeadingOffset = headingOffset;
+    }  
+}
