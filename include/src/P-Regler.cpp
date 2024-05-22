@@ -67,24 +67,52 @@ float turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor 
 
 void testfunktion(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2){
 
+    Motor_Group RightSide({Right1, Right2});
+    Motor_Group LeftSide({Left1, Left2});
+
+
     float turnSpeed = 0;
     float maxTurnSpeed = 200;
     float currentHeading;
-    float headingOffset;
-    float headingOffsetSum;
+    float error;
+    float integral;
+    float derivative;
 
-    float oldHeadingOffset;
+    float last_error;
 
-    float kp;
-    float ki;
-    float kd;
+    float kp = 0.52;
+    float ki = 0.5;
+    float kd = 0.5;
 
-    while (headingOffset == 0) {
-        headingOffset = currentHeading - toHeading;
-        headingOffsetSum += headingOffset;
+    while (gyro.get_value() - toHeading != 0) {
+        currentHeading = gyro.get_value();
+        error = currentHeading - toHeading;
+        integral += error;
+        derivative = error - last_error;
 
-        turnSpeed = kp*headingOffset + ki*0*headingOffsetSum + kd/0*(headingOffset - oldHeadingOffset);
 
-        oldHeadingOffset = headingOffset;
+        turnSpeed = (kp*error) + (ki*integral) + (kd*derivative);
+
+        if (turnSpeed >= maxTurnSpeed) {
+            turnSpeed = maxTurnSpeed;
+        } else if (turnSpeed <= -maxTurnSpeed) {
+            turnSpeed = -maxTurnSpeed;
+        }
+
+        if(turnSpeed > 0)
+        {
+            RightSide.move_velocity(-turnSpeed);
+            LeftSide.move_velocity(turnSpeed);
+        }   else if(turnSpeed < 0){
+            RightSide.move_velocity(turnSpeed);
+            LeftSide.move_velocity(-turnSpeed);
+        }   else {
+            RightSide.brake();
+            LeftSide.brake();
+        }
+        
+        last_error = error;
+
+        
     }  
 }
