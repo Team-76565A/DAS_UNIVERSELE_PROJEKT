@@ -1,4 +1,8 @@
 #include "main.h"
+#include "pros/llemu.hpp"
+#include "pros/misc.h"
+#include "pros/misc.hpp"
+#include "pros/rtos.hpp"
 #include "src/cmConvertor.cpp"
 #include "src/degConvertorTurn.cpp"
 #include "src/P-Regler.cpp"
@@ -12,12 +16,12 @@ using namespace pros;
 Controller controller (E_CONTROLLER_MASTER);
 
 //Motoren
-Motor LBWheel(1, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor LFWheel(1, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
 //Motor LMWheel(10, pros::E_MOTOR_GEARSET_18, false,pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor LFWheel(3, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor RBWheel(4, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor LBWheel(2, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor RFWheel(3, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
 //Motor RMWheel(5, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor RFWheel(6, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor RBWheel(4, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
 
 //Motor Groups
 Motor_Group Drive({LBWheel, LFWheel, /*LMWheel,*/ RBWheel, RFWheel/*, RMWheel*/});
@@ -48,8 +52,6 @@ float headingOffset;
 void initialize() {
 	pros::lcd::initialize();
 	gyro.reset();
-	autonomous();
-
 }
 
 void drehenAufGrad(float toHeading)
@@ -100,7 +102,11 @@ void competition_initialize() {}
 void autonomous() 
 {	
 	c::delay(1000);
-	drehenAufGrad(290);
+	gyro.reset();
+
+	
+	controller.print(4, 4, "d%", 1.0);
+	drehenAufGrad(180);
 	Drive.move_absolute(2, 100);
 }
 

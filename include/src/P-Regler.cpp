@@ -13,7 +13,7 @@ using namespace pros;
 /*
 * Ein P-Regler
 */
-float turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2) {
+float altVersion(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2) {
 
     Motor_Group RightSide({Right1, Right2});
     Motor_Group LeftSide({Left1, Left2});
@@ -65,7 +65,7 @@ float turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor 
     return TurnSpeed;
 }
 
-void testfunktion(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2){
+void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2){
 
     Motor_Group RightSide({Right1, Right2});
     Motor_Group LeftSide({Left1, Left2});
@@ -80,19 +80,20 @@ void testfunktion(float toHeading, ADIGyro gyro, Controller controller, Motor Le
 
     float last_error;
 
-    float kp = 0.52;
-    float ki = 0.5;
-    float kd = 0.5;
+    float kp = 0.00005;
+    float ki = 0.00005;
+    float kd = 0.00005;
 
     while (gyro.get_value() - toHeading != 0) {
-        currentHeading = gyro.get_value();
+        currentHeading = gyro.get_value()/10;
         error = currentHeading - toHeading;
         integral += error;
         derivative = error - last_error;
 
 
         turnSpeed = (kp*error) + (ki*integral) + (kd*derivative);
-
+        controller.clear();
+        controller.print(1, 1, "turnspeed: %f", turnSpeed);
         if (turnSpeed >= maxTurnSpeed) {
             turnSpeed = maxTurnSpeed;
         } else if (turnSpeed <= -maxTurnSpeed) {
@@ -110,6 +111,12 @@ void testfunktion(float toHeading, ADIGyro gyro, Controller controller, Motor Le
             RightSide.brake();
             LeftSide.brake();
         }
+        
+        /*controller.print(0, 1, "turnspeed: %f",  turnSpeed);
+        controller.print(1, 1, "error %f",  error);
+        controller.print(2, 1, "integral: %f",  integral);
+        controller.print(3, 1, "derivative %f",  derivative);
+        controller.print(4, 1, "currentHeading %f",  currentHeading);*/
         
         last_error = error;
 
