@@ -80,11 +80,13 @@ void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor L
 
     float last_error;
 
-    float kp = 0.00005;
-    float ki = 0.00005;
-    float kd = 0.00005;
+    float kp = 0.52;
+    float ki = 0.000015;
+    float kd = 0.005;
 
-    while (gyro.get_value() - toHeading != 0) {
+
+    while(!(currentHeading <= toHeading + 0.8 && currentHeading >= toHeading - 0.8))
+    {
         currentHeading = gyro.get_value()/10;
         error = currentHeading - toHeading;
         integral += error;
@@ -92,34 +94,31 @@ void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor L
 
 
         turnSpeed = (kp*error) + (ki*integral) + (kd*derivative);
-        controller.clear();
-        controller.print(1, 1, "turnspeed: %f", turnSpeed);
+        
         if (turnSpeed >= maxTurnSpeed) {
             turnSpeed = maxTurnSpeed;
         } else if (turnSpeed <= -maxTurnSpeed) {
             turnSpeed = -maxTurnSpeed;
         }
-
-        if(turnSpeed > 0)
+        
+        if(turnSpeed < 0){
+            RightSide.move_velocity(turnSpeed);
+            LeftSide.move_velocity(-turnSpeed);
+        } else if(turnSpeed > 0)
         {
             RightSide.move_velocity(-turnSpeed);
             LeftSide.move_velocity(turnSpeed);
-        }   else if(turnSpeed < 0){
-            RightSide.move_velocity(turnSpeed);
-            LeftSide.move_velocity(-turnSpeed);
-        }   else {
+        } else
+        {
             RightSide.brake();
             LeftSide.brake();
         }
-        
-        /*controller.print(0, 1, "turnspeed: %f",  turnSpeed);
-        controller.print(1, 1, "error %f",  error);
-        controller.print(2, 1, "integral: %f",  integral);
-        controller.print(3, 1, "derivative %f",  derivative);
-        controller.print(4, 1, "currentHeading %f",  currentHeading);*/
-        
-        last_error = error;
-
-        
-    }  
+        controller.clear();
+        controller.print(0, 1, "trunSpeed: %f", turnSpeed);
+        controller.print(1, 1, "errror %f", error);
+    }
+    RightSide.brake();
+    LeftSide.brake();
 }
+
+

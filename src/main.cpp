@@ -105,9 +105,7 @@ void autonomous()
 	gyro.reset();
 
 	
-	controller.print(4, 4, "d%", 1.0);
 	drehenAufGrad(180);
-	Drive.move_absolute(2, 100);
 }
 
 /**
