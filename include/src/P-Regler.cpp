@@ -13,7 +13,7 @@ using namespace pros;
 /*
 * Ein P-Regler
 */
-float altVersion(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2) {
+/*float altVersion(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2) {
 
     Motor_Group RightSide({Right1, Right2});
     Motor_Group LeftSide({Left1, Left2});
@@ -63,7 +63,7 @@ float altVersion(float toHeading, ADIGyro gyro, Controller controller, Motor Lef
     }
     controller.rumble("---");
     return TurnSpeed;
-}
+}*/
 
 void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2){
 
@@ -74,14 +74,14 @@ void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor L
     float turnSpeed = 0;
     float maxTurnSpeed = 200;
     float currentHeading;
-    float error;
-    float integral;
-    float derivative;
+    float error = 0;
+    float integral = 0;
+    float derivative = 0;
 
-    float last_error;
+    float last_error = 0;
 
-    float kp = 0.52;
-    float ki = 0.000015;
+    float kp = 0.92;
+    float ki = 0.000013;
     float kd = 0.005;
 
 
@@ -119,6 +119,7 @@ void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor L
     }
     RightSide.brake();
     LeftSide.brake();
+    return;
 }
 
 

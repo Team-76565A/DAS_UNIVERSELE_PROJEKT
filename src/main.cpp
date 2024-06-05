@@ -56,10 +56,9 @@ void initialize() {
 
 void drehenAufGrad(float toHeading)
 {	
-
 	turnToHeading(toHeading, gyro, controller, LBWheel, LFWheel, RBWheel, RFWheel);
-	/*controller.rumble("--");
-	//headingOffset = gyro.get_value() - wunschHeading;
+	
+	/*//headingOffset = gyro.get_value() - wunschHeading;
 	controller.clear();
 	controller.print(1, 1, "f%",  gyro.get_value());
 	while(!(headingOffset >= headingOffset - 1 && headingOffset <= headingOffset + 1))	{
@@ -68,6 +67,7 @@ void drehenAufGrad(float toHeading)
 		LeftSide.move_absolute(degConvertorTurn(wunschHeading, gyro), turnSpeed);
 		RightSide.move_absolute(degConvertorTurn(wunschHeading, gyro), turnSpeed);
 	}*/
+	
 }
 
 /**
@@ -102,10 +102,9 @@ void competition_initialize() {}
 void autonomous() 
 {	
 	c::delay(1000);
-	gyro.reset();
-
-	
 	drehenAufGrad(180);
+	Drive.move_absolute(convertUnits(10, "cm", "rotations"), 100);
+	drehenAufGrad(0);
 }
 
 /**
