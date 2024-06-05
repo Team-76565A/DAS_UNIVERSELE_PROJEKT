@@ -5,6 +5,7 @@
 #include "pros/rtos.hpp"
 #include "src/cmConvertor.cpp"
 #include "src/degConvertorTurn.cpp"
+#include "src/PID-Drive.cpp"
 #include "src/P-Regler.cpp"
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
@@ -24,7 +25,7 @@ Motor RFWheel(3, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS
 Motor RBWheel(4, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
 
 //Motor Groups
-Motor_Group Drive({LBWheel, LFWheel, /*LMWheel,*/ RBWheel, RFWheel/*, RMWheel*/});
+Motor_Group Drive({LBWheel, LFWheel, RBWheel, RFWheel});
 Motor_Group LeftSide({LBWheel, LFWheel/*, LMWheel*/});
 Motor_Group RightSide({RBWheel, RFWheel/*, RMWheel*/});
 
@@ -70,6 +71,11 @@ void drehenAufGrad(float toHeading)
 	
 }
 
+void drivePID(float driveFor)
+{
+	//driveStraight(driveFor, gyro.get_value(), gyro, controller, LBWheel, LFWheel, RBWheel, RFWheel);
+}
+
 /**
  * Runs while the robot is in the disabled state of Field Management System or
  * the VEX Competition Switch, following either autonomous or opcontrol. When
@@ -103,8 +109,12 @@ void autonomous()
 {	
 	c::delay(1000);
 	drehenAufGrad(180);
-	Drive.move_absolute(convertUnits(10, "cm", "rotations"), 100);
-	drehenAufGrad(0);
+	c::delay(3000);
+	drehenAufGrad(170);
+	c::delay(3000);
+	drehenAufGrad(180);
+	c::delay(3000);
+	drehenAufGrad(190);
 }
 
 /**
