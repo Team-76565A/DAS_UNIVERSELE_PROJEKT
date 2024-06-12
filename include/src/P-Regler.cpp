@@ -65,7 +65,7 @@ using namespace pros;
     return TurnSpeed;
 }*/
 
-void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2){
+int turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2){
 
     Motor_Group RightSide({Right1, Right2});
     Motor_Group LeftSide({Left1, Left2});
@@ -80,8 +80,14 @@ void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor L
 
     float last_error = 0;
 
-    float kp = 0.92;
+    //Mit Print drin
+    /*float kp = 0.92;
     float ki = 0.000013;
+    float kd = 0.005;*/
+
+    //ohne Print
+    float kp = 0.87;
+    float ki = 0.0000025;
     float kd = 0.005;
 
 
@@ -91,11 +97,6 @@ void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor L
         error = currentHeading - toHeading;
         integral += error;
         derivative = error - last_error;
-
-        controller.clear();
-        controller.print(0, 1, "trunSpeed: %f", turnSpeed);
-        controller.print(1, 1, "errror %f", error);
-        controller.print(2, 1, "current %f", currentHeading);
         turnSpeed = (kp*error) + (ki*integral) + (kd*derivative);
         
         if (turnSpeed >= maxTurnSpeed) {
@@ -109,8 +110,8 @@ void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor L
             LeftSide.move_velocity(-turnSpeed);
         } else if(turnSpeed > 0)
         {
-            RightSide.move_velocity(-turnSpeed);
-            LeftSide.move_velocity(turnSpeed);
+            RightSide.move_velocity(turnSpeed);
+            LeftSide.move_velocity(-turnSpeed);
         } else
         {
             RightSide.brake();
@@ -120,7 +121,7 @@ void turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor L
     }
     RightSide.brake();
     LeftSide.brake();
-    return;
+    return 0;
 }
 
 

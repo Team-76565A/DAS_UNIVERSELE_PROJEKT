@@ -18,10 +18,8 @@ Controller controller (E_CONTROLLER_MASTER);
 
 //Motoren
 Motor LFWheel(1, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
-//Motor LMWheel(10, pros::E_MOTOR_GEARSET_18, false,pros::E_MOTOR_ENCODER_ROTATIONS);
 Motor LBWheel(2, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
 Motor RFWheel(3, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
-//Motor RMWheel(5, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
 Motor RBWheel(4, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
 
 //Motor Groups
@@ -31,6 +29,7 @@ Motor_Group RightSide({RBWheel, RFWheel/*, RMWheel*/});
 
 //Sensoren
 ADIGyro gyro('A');
+ADIDigitalOut piston ('H');
 
 
 //floats
@@ -58,17 +57,8 @@ void initialize() {
 void drehenAufGrad(float toHeading)
 {	
 	turnToHeading(toHeading, gyro, controller, LBWheel, LFWheel, RBWheel, RFWheel);
-	
-	/*//headingOffset = gyro.get_value() - wunschHeading;
 	controller.clear();
-	controller.print(1, 1, "f%",  gyro.get_value());
-	while(!(headingOffset >= headingOffset - 1 && headingOffset <= headingOffset + 1))	{
-		controller.rumble("..");
-		turnSpeed = turnToHeading(wunschHeading, gyro, controller);
-		LeftSide.move_absolute(degConvertorTurn(wunschHeading, gyro), turnSpeed);
-		RightSide.move_absolute(degConvertorTurn(wunschHeading, gyro), turnSpeed);
-	}*/
-	
+	controller.print(1, 1, "CurrentHeading f%", gyro.get_value());
 }
 
 void drivePID(float driveFor)
@@ -109,12 +99,12 @@ void autonomous()
 {	
 	c::delay(1000);
 	drehenAufGrad(180);
-	c::delay(3000);
+	/*c::delay(3000);
 	drehenAufGrad(170);
 	c::delay(3000);
 	drehenAufGrad(180);
 	c::delay(3000);
-	drehenAufGrad(190);
+	drehenAufGrad(190);*/
 }
 
 /**
@@ -132,4 +122,29 @@ void autonomous()
  */
 void opcontrol() {
 
+
+	while(true)
+	{	
+		int LVelocity = ((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)/127*200) + (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)/127*200)) + (
+			(controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y)/127*100) + (controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/127*100));
+		int RVelocity = ((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)/127*200) - (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)/127*200)) + (
+			(controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y)/127*100) - (controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/127*100));
+
+		LeftSide.move_velocity(LVelocity);
+		RightSide.move_velocity(RVelocity);
+
+		if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) 
+		{
+			LeftSide.brake();
+			RightSide.brake();
+			c::delay(1000*1000);
+		}
+
+		if(controller.get_digital(E_CONTROLLER_DIGITAL_A))
+		{
+			piston.set_value(true);
+		}	else {
+			piston.set_value(false);
+		}
+	}
 }
