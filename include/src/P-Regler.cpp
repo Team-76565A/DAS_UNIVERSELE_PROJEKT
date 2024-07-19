@@ -65,10 +65,10 @@ using namespace pros;
     return TurnSpeed;
 }*/
 
-int turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Right1, Motor Right2){
+int turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Left3, Motor Right1, Motor Right2, Motor Right3){
 
-    Motor_Group RightSide({Right1, Right2});
-    Motor_Group LeftSide({Left1, Left2});
+    Motor_Group RightSide({Right1, Right2, Right3});
+    Motor_Group LeftSide({Left1, Left2, Right3});
 
 
     float turnSpeed = 0;

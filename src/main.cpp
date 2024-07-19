@@ -17,19 +17,22 @@ using namespace pros;
 Controller controller (E_CONTROLLER_MASTER);
 
 //Motoren
-Motor LFWheel(1, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor LBWheel(2, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor RFWheel(3, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor RBWheel(4, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor LBWheel(10, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor LMWheel(8, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor LFWheel(9, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor RBWheel(1, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor RMWheel(2, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
+Motor RFWheel(3, pros::E_MOTOR_GEARSET_18, false, pros::E_MOTOR_ENCODER_ROTATIONS);
 
 //Motor Groups
-Motor_Group Drive({LBWheel, LFWheel, RBWheel, RFWheel});
-Motor_Group LeftSide({LBWheel, LFWheel/*, LMWheel*/});
-Motor_Group RightSide({RBWheel, RFWheel/*, RMWheel*/});
+//Motor_Group Drive({LBWheel, LFWheel, RBWheel, RFWheel});
+Motor_Group LeftSide({LBWheel, LFWheel, LMWheel});
+Motor_Group RightSide({RBWheel, RFWheel, RMWheel});
 
 //Sensoren
 ADIGyro gyro('A');
 ADIDigitalOut piston ('H');
+
 
 
 //floats
@@ -56,7 +59,7 @@ void initialize() {
 
 void drehenAufGrad(float toHeading)
 {	
-	turnToHeading(toHeading, gyro, controller, LBWheel, LFWheel, RBWheel, RFWheel);
+	turnToHeading(toHeading, gyro, controller, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
 	controller.clear();
 	controller.print(1, 1, "CurrentHeading f%", gyro.get_value());
 }
@@ -125,7 +128,7 @@ void opcontrol() {
 
 	while(true)
 	{	
-		int LVelocity = ((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)/127*200) + (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)/127*200)) + (
+		int LVelocity = ((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)/127*100) + (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)/127*100)) + (
 			(controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y)/127*100) + (controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/127*100));
 		int RVelocity = ((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)/127*200) - (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)/127*200)) + (
 			(controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y)/127*100) - (controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/127*100));
@@ -133,12 +136,6 @@ void opcontrol() {
 		LeftSide.move_velocity(LVelocity);
 		RightSide.move_velocity(RVelocity);
 
-		if(controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN)) 
-		{
-			LeftSide.brake();
-			RightSide.brake();
-			c::delay(1000*1000);
-		}
 
 		if(controller.get_digital(E_CONTROLLER_DIGITAL_A))
 		{
