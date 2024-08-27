@@ -3,145 +3,112 @@
 #include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"
-#include "src/cmConvertor.cpp"
-#include "src/degConvertorTurn.cpp"
-#include "src/PID-Drive.cpp"
-#include "src/P-Regler.cpp"
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
 #include "pros/rtos.h"
 
+// Include custom modules
+#include "src/cmConvertor.cpp"
+#include "src/degConvertorTurn.cpp"
+#include "src/PID-Drive.cpp"
+#include "src/P-Regler.cpp"
+
 using namespace pros;
 
-//Controller
-Controller controller (E_CONTROLLER_MASTER);
+// Controller
+Controller controller(E_CONTROLLER_MASTER);
 
-//Motoren
-Motor LBWheel(10, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor LMWheel(8, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor LFWheel(9, pros::E_MOTOR_GEARSET_18, true,	pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor RBWheel(1, pros::E_MOTOR_GEARSET_18, false,	pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor RMWheel(2, pros::E_MOTOR_GEARSET_18, true, pros::E_MOTOR_ENCODER_ROTATIONS);
-Motor RFWheel(3, pros::E_MOTOR_GEARSET_18, false, pros::E_MOTOR_ENCODER_ROTATIONS);
+// Motors
+Motor LBWheel(1, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_ROTATIONS);
+Motor LMWheel(3, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_ROTATIONS);
+Motor LFWheel(4, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_ROTATIONS);
+Motor RBWheel(18, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_ROTATIONS);
+Motor RMWheel(9, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_ROTATIONS);
+Motor RFWheel(17, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_ROTATIONS);
 
-//Motor Groups
-//Motor_Group Drive({LBWheel, LFWheel, RBWheel, RFWheel});
+Motor IntakeMotor1(16, E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_ROTATIONS);
+Motor IntakeMotor2(15, E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_ROTATIONS);
+
+// Motor Groups
 Motor_Group LeftSide({LBWheel, LFWheel, LMWheel});
 Motor_Group RightSide({RBWheel, RFWheel, RMWheel});
+Motor_Group Intake({IntakeMotor1, IntakeMotor2});
 
-//Sensoren
+// Sensors
 ADIGyro gyro('A');
-ADIDigitalOut piston ('H');
+ADIDigitalOut piston('H');
 
-
-
-//floats
-float turnSpeed = 0;
-float headingOffset;
-
-/**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
-
-/**
- * Runs initialization code. This occurs as soon as the program is started.
- *
- * All other competition modes are blocked by initialize; it is recommended
- * to keep execution time for this mode under a few seconds.
- */
+// Initialization
 void initialize() {
-	pros::lcd::initialize();
-	gyro.reset();
+    pros::lcd::initialize();
+    gyro.reset();
+    controller.clear();
 }
 
-void drehenAufGrad(float toHeading)
-{	
-	turnToHeading(toHeading, gyro, controller, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
-	controller.clear();
-	controller.print(1, 1, "CurrentHeading f%", gyro.get_value());
+// Turn to a specified heading
+void drehenAufGrad(float toHeading) {    
+    turnToHeading(toHeading, gyro, controller, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
+    controller.clear();
+    controller.print(1, 1, "Current Heading: %f", gyro.get_value());
 }
 
-void drivePID(float driveFor)
-{
-	//driveStraight(driveFor, gyro.get_value(), gyro, controller, LBWheel, LFWheel, RBWheel, RFWheel);
+// Map analog value
+int mapAnalogValue(int x) {
+    return -200 + (200.0 / 127) * (x + 127);
 }
 
-/**
- * Runs while the robot is in the disabled state of Field Management System or
- * the VEX Competition Switch, following either autonomous or opcontrol. When
- * the robot is enabled, this task will exit.
- */
+// Drive PID
+void drivePID(float driveFor) {
+    // Implement drive PID function here
+}
+
+// Disabled state
 void disabled() {}
 
-/**
- * Runs after initialize(), and before autonomous when connected to the Field
- * Management System or the VEX Competition Switch. This is intended for
- * competition-specific initialization routines, such as an autonomous selector
- * on the LCD.
- *
- * This task will exit when the robot is enabled and autonomous or opcontrol
- * starts.
- */
+// Competition initialization
 void competition_initialize() {}
 
-/**
- * Runs the user autonomous code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the autonomous
- * mode. Alternatively, this function may be called in initialize or opcontrol
- * for non-competition testing purposes.
- *
- * If the robot is disabled or communications is lost, the autonomous task
- * will be stopped. Re-enabling the robot will restart the task, not re-start it
- * from where it left off.
- */
-void autonomous() 
-{	
-	c::delay(1000);
-	drehenAufGrad(180);
-	/*c::delay(3000);
-	drehenAufGrad(170);
-	c::delay(3000);
-	drehenAufGrad(180);
-	c::delay(3000);
-	drehenAufGrad(190);*/
+// Autonomous
+void autonomous() {    
+    c::delay(1000);
+    drehenAufGrad(180);
+    // Additional autonomous actions can be added here
 }
 
-/**
- * Runs the operator control code. This function will be started in its own task
- * with the default priority and stack size whenever the robot is enabled via
- * the Field Management System or the VEX Competition Switch in the operator
- * control mode.
- *
- * If no competition control is connected, this function will run immediately
- * following initialize().
- *
- * If the robot is disabled or communications is lost, the
- * operator control task will be stopped. Re-enabling the robot will restart the
- * task, not resume it from where it left off.
- */
+// Operator control
 void opcontrol() {
+    int x = 0;
+    int y = 0;
+    bool previousButtonState = false;
+    bool pistonActive = false;
 
+    while (true) {        
+        // Print gyro value on controller screen
+        controller.print(0, 0, "Heading: %.2f", gyro.get_value() / 10);
 
-	while(true)
-	{	
-		int LVelocity = ((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)/127*100) + (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)/127*100)) + (
-			(controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y)/127*100) + (controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/127*100));
-		int RVelocity = ((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)/127*200) - (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)/127*200)) + (
-			(controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_Y)/127*100) - (controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_X)/127*100));
+        // Drive control
+        LeftSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) + 
+                      (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
+        RightSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) - 
+                       (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
+        
+        // Piston control
+        bool currentButtonState = controller.get_digital(E_CONTROLLER_DIGITAL_A);
+        if (currentButtonState && !previousButtonState) {
+            pistonActive = !pistonActive;
+            piston.set_value(pistonActive);
+        }
+        previousButtonState = currentButtonState;
 
-		LeftSide.move_velocity(LVelocity);
-		RightSide.move_velocity(RVelocity);
+        // Intake control
+        if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
+            Intake.move(127);  // Spin intake inwards at full speed
+        } else if (controller.get_digital(E_CONTROLLER_DIGITAL_R2)) {
+            Intake.move(-127); // Spin intake outwards at full speed
+        } else {
+            Intake.move(0);    // Stop intake
+        }
 
-
-		if(controller.get_digital(E_CONTROLLER_DIGITAL_A))
-		{
-			piston.set_value(true);
-		}	else {
-			piston.set_value(false);
-		}
-	}
+        pros::delay(20);  // Delay to prevent excessive CPU usage
+    }
 }

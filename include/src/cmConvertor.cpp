@@ -7,52 +7,37 @@
 using namespace std;
 using namespace pros;
 
-
-/*
-* Converts units
-* your parameter ist given now you have to give the unit from 
-* your parameter => fromUnit
-* which unit do you want? => toUnit
-*/
-float convertUnits(int parameter, string fromUnit, string toUnit, float CircumferenceInCm = 31.91)
-{
-    if (fromUnit == "cm")
-    {
-        if (toUnit == "rotations")
-        {
-            return parameter/CircumferenceInCm;
+/**
+ * Converts units between different measurements.
+ * 
+ * @param parameter The value to convert.
+ * @param fromUnit The current unit of the parameter (e.g., "cm", "inches").
+ * @param toUnit The desired unit after conversion (e.g., "rotations", "degrees").
+ * @param CircumferenceInCm The circumference of the wheel in centimeters (default is 31.91 cm).
+ * @return float The converted value.
+ */
+float convertUnits(int parameter, const string& fromUnit, const string& toUnit, float CircumferenceInCm = 31.91) {
+    if (fromUnit == "cm") {
+        if (toUnit == "rotations") {
+            return parameter / CircumferenceInCm;
+        } else if (toUnit == "degrees") {
+            return (parameter / CircumferenceInCm) * 360;
         }
-        else if (toUnit == "degress") 
-        {
-            return (parameter/CircumferenceInCm)*360;
-        }
-    }
-    else if (fromUnit == "inches") 
-    {
-
-        if (toUnit == "cm")
-        {
-            return parameter*2.54;
-        }
-        else if (toUnit == "rotations")
-        {
-            return convertUnits(parameter, "inches", "cm")/CircumferenceInCm;
-        }
-        else if (toUnit == "degress") 
-        {
-            return (convertUnits(parameter, "inches", "cm")/CircumferenceInCm)*360;
+    } else if (fromUnit == "inches") {
+        if (toUnit == "cm") {
+            return parameter * 2.54;
+        } else if (toUnit == "rotations") {
+            return convertUnits(parameter, "inches", "cm", CircumferenceInCm) / CircumferenceInCm;
+        } else if (toUnit == "degrees") {
+            return (convertUnits(parameter, "inches", "cm", CircumferenceInCm) / CircumferenceInCm) * 360;
         }
     }
 
-    return 1;
+    return 1; // Default return value if no valid conversion is found
 }
 
-
-/*void MoveCentimeter(pros::Motor_Group i, float centimeter, int velocity)
-{
-
-
-    //i.move_relative(convertUnits(centimeter, "cm,", "rotations"), velocity);
-    
+/* Example function for moving a motor group by a certain distance
+void MoveCentimeter(pros::Motor_Group group, float centimeter, int velocity) {
+    group.move_relative(convertUnits(centimeter, "cm", "rotations"), velocity);
 }
 */
