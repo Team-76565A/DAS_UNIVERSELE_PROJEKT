@@ -12,6 +12,7 @@
 #include "src/degConvertorTurn.cpp"
 #include "src/PID-Drive.cpp"
 #include "src/P-Regler.cpp"
+#include "src/PID-Konstanten.cpp"
 
 using namespace pros;
 
@@ -37,12 +38,17 @@ Motor_Group Intake({IntakeMotor1, IntakeMotor2});
 // Sensors
 ADIGyro gyro('A');
 ADIDigitalOut piston('H');
+ADIDigitalOut climb('F');
 
 // Initialization
 void initialize() {
     pros::lcd::initialize();
     gyro.reset();
     controller.clear();
+
+    //Set Breake mode to active holding on position
+    LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
+    RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
 }
 
 // Turn to a specified heading
@@ -62,6 +68,16 @@ void drivePID(float driveFor) {
     // Implement drive PID function here
 }
 
+// AutoDrive
+int AutoDrive(float cm, int direction) {
+    LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
+    RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
+
+    return 0;
+    
+}
+
+
 // Disabled state
 void disabled() {}
 
@@ -70,8 +86,13 @@ void competition_initialize() {}
 
 // Autonomous
 void autonomous() {    
-    c::delay(1000);
-    drehenAufGrad(180);
+    AutoDrive(85, -1);
+    while(LeftSide.at(0).is_stopped() == 0 && RightSide.at(0).is_stopped() == 0)
+    {
+        pros::delay(10000);
+    }
+    drehenAufGrad(50); 
+    //trainPIDConstants(180, gyro, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     // Additional autonomous actions can be added here
 }
 
@@ -79,8 +100,14 @@ void autonomous() {
 void opcontrol() {
     int x = 0;
     int y = 0;
-    bool previousButtonState = false;
+    bool previousButtonStateIntake = false;
+	bool previousButtonStateClimb = false;
     bool pistonActive = false;
+	bool climbActive = false;
+
+    //Set Breake mode to active holding on position
+    LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
+    RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
 
     while (true) {        
         // Print gyro value on controller screen
@@ -93,12 +120,21 @@ void opcontrol() {
                        (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
         
         // Piston control
-        bool currentButtonState = controller.get_digital(E_CONTROLLER_DIGITAL_A);
-        if (currentButtonState && !previousButtonState) {
+        bool currentButtonStateIntake = controller.get_digital(E_CONTROLLER_DIGITAL_A);
+        if (currentButtonStateIntake && !previousButtonStateIntake) {
             pistonActive = !pistonActive;
             piston.set_value(pistonActive);
         }
-        previousButtonState = currentButtonState;
+        previousButtonStateIntake = currentButtonStateIntake;
+
+
+		// Climb control
+        bool currentButtonStateClimb = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+        if (currentButtonStateClimb && !previousButtonStateClimb) {
+            climbActive = !climbActive;
+            climb.set_value(climbActive);
+        }
+        previousButtonStateClimb = currentButtonStateClimb;
 
         // Intake control
         if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
