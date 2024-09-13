@@ -86,12 +86,17 @@ void competition_initialize() {}
 
 // Autonomous
 void autonomous() {    
-    AutoDrive(85, -1);
-    while(LeftSide.at(0).is_stopped() == 0 && RightSide.at(0).is_stopped() == 0)
-    {
-        pros::delay(10000);
-    }
-    drehenAufGrad(50); 
+
+    //TODO etwas weiter fahren
+    
+    AutoDrive(85, -1); 
+    pros::delay(1000);
+    drehenAufGrad(25); 
+    pros::delay(1000);
+    AutoDrive(50, -1);
+    pros::delay(1000);
+    piston.set_value(true);
+    pros::delay(1000);
     //trainPIDConstants(180, gyro, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     // Additional autonomous actions can be added here
 }
