@@ -1,14 +1,14 @@
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
 #include "pros/rtos.hpp"
-#include <cmath>    // for fabs
-#include <fstream>  // for file handling
-#include <ctime>    // for timestamps
-#include <sstream>  // for stringstream
+#include <cmath>
+#include <cstdio> // For file handling functions (fopen, fputs, etc.)
+#include <ctime>  // For timestamps
+#include <sstream>
 
 using namespace pros;
 
-// Function to get the current timestamp as a string
+// Function to get current timestamp for logging
 std::string getCurrentTimeStamp() {
     std::time_t now = std::time(nullptr);
     std::tm* tm_now = std::localtime(&now);
@@ -17,137 +17,119 @@ std::string getCurrentTimeStamp() {
     return std::string(buffer);
 }
 
-// Function to log messages to a file
-void logToFile(const std::string& message) {
-    std::ofstream logFile;
-    std::string timestamp = getCurrentTimeStamp();
-    std::string filePath = "/include/test/PID_Log_.txt";
-    logFile.open(filePath, std::ios::app);
+// Function to log data to the SD card
+void logToSDCard(const std::string& message) {
+    FILE* logFile = fopen("/usd/PID_Log.txt", "a"); // Append mode
 
-    if (!logFile.is_open()) {
-        // If file can't be opened, print to standard output (could be replaced with other error handling)
-        //+std::cout << "Error opening log file!" << std::endl;
-        return;
+    if (logFile != nullptr) {
+        fputs(message.c_str(), logFile);  // Write the message to the file
+        fputs("\n", logFile);             // Add a newline for readability
+        fclose(logFile);                  // Always close the file after writing
     }
-
-    logFile << message << std::endl;
-    logFile.close();
 }
 
-// Function to train PID constants by testing the robot's performance in turning
+// Function to calculate new PID constants based on performance analysis
+void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float overshoot, float timeTaken) {
+    // Target performance criteria
+    const float targetOvershoot = 0.0;
+    const float targetError = 0.0;
+    const float targetTime = 1.0; // seconds, can be tuned
+
+    // Adjustment rate for PID coefficients
+    const float learningRate = 0.1;
+
+    // Adjust Kp: Focus on reducing total error
+    if (totalError > targetError) {
+        kp += learningRate * (totalError - targetError);
+    } else {
+        kp -= learningRate * (targetError - totalError);
+    }
+
+    // Adjust Kd: Focus on reducing overshoot
+    if (overshoot > targetOvershoot) {
+        kd += learningRate * (overshoot - targetOvershoot);
+    } else {
+        kd -= learningRate * (targetOvershoot - overshoot);
+    }
+
+    // Adjust Ki: Focus on convergence time (minimizing time to reach the target)
+    if (timeTaken > targetTime) {
+        ki += learningRate * (timeTaken - targetTime);
+    } else {
+        ki -= learningRate * (targetTime - timeTaken);
+    }
+
+    // Ensure the constants remain positive
+    kp = fmax(kp, 0.0);
+    ki = fmax(ki, 0.0);
+    kd = fmax(kd, 0.0);
+}
+
+// Main function to train PID and log data
 void trainPIDConstants(float toHeading, ADIGyro gyro, Motor LBWheel, Motor LMWheel, Motor LFWheel, Motor RBWheel, Motor RMWheel, Motor RFWheel) {
-    // Motor groups for left and right sides
     Motor_Group RightSide({RBWheel, RMWheel, RFWheel});
     Motor_Group LeftSide({LBWheel, LMWheel, LFWheel});
 
-    // PID control variables
+    // Initial PID values
+    float kp = 0.87, ki = 0.0000025, kd = 0.005;
+    float error = 0, last_error = 0, integral = 0, derivative = 0;
     float turnSpeed = 0;
     const float maxTurnSpeed = 200;
-    float currentHeading = 0;
-    float error = 0;
-    float integral = 0;
-    float derivative = 0;
-    float last_error = 0;
 
-    // PID coefficients (starting with default values)
-    float kp = 0.87;
-    float ki = 0.0000025;
-    float kd = 0.005;
+    // Log initial PID constants
+    logToSDCard("Initial PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd));
 
-    // Best PID constants
-    float bestKp = kp, bestKi = ki, bestKd = kd;
-    float smallestError = 1000;  // Initially set to a large value
-
-    // PID tuning step size (how much to adjust constants in each step)
-    float kp_step = 0.05;
-    float ki_step = 0.000005;
-    float kd_step = 0.001;
-
-    bool trainingComplete = false;
-
-    // Log initial setup
-    std::stringstream ss;
-    ss << "Timestamp: " << getCurrentTimeStamp() << "\n";
-    ss << "Initial PID Constants - Kp: " << kp << ", Ki: " << ki << ", Kd: " << kd;
-    logToFile(ss.str());
-
-    // Training loop to adjust PID constants
-    while (!trainingComplete) {
-        // Reset integral and error values for each test
+    // Training loop for PID tuning
+    for (int trial = 0; trial < 50; trial++) {
         integral = 0;
         last_error = 0;
-
-        // Start with a heading reset
         gyro.reset();
-        pros::delay(100); // Small delay to ensure gyro resets
+        pros::delay(100);
 
-        // Loop until the robot reaches the desired heading
-        while (!(currentHeading <= toHeading + 0.8 && currentHeading >= toHeading - 0.8)) {
-            currentHeading = fabs(gyro.get_value()) / 10; // Get current heading
-            error = currentHeading - toHeading; // Calculate error
-            integral += error; // Update integral
-            derivative = error - last_error; // Calculate derivative
+        // Performance metrics
+        float totalError = 0;
+        float overshoot = 0;
+        float startTime = pros::millis();
+        float currentHeading = 0;
 
-            // Calculate turn speed using PID formula
-            turnSpeed = (kp * error) + (ki * integral) + (kd * derivative);
+        // Perform turn control using PID
+        do {
+            currentHeading = std::abs(gyro.get_value()) / 10.0;  // Get current heading
+            error = toHeading - currentHeading;                  // Calculate error
+            integral += error;                                   // Accumulate integral
+            derivative = error - last_error;                     // Derivative (rate of change)
 
-            // Clamp turn speed to maximum allowable value
-            if (turnSpeed >= maxTurnSpeed) {
-                turnSpeed = maxTurnSpeed;
-            } else if (turnSpeed <= -maxTurnSpeed) {
-                turnSpeed = -maxTurnSpeed;
-            }
+            turnSpeed = (kp * error) + (ki * integral) + (kd * derivative); // PID formula
+            turnSpeed = std::clamp(turnSpeed, -maxTurnSpeed, maxTurnSpeed); // Limit motor speed
 
-            // Move the motors
             RightSide.move_velocity(turnSpeed);
             LeftSide.move_velocity(-turnSpeed);
 
-            last_error = error; // Update last error
-        }
+            // Collect performance metrics
+            totalError += std::abs(error);
+            if (currentHeading > toHeading) overshoot = currentHeading - toHeading;  // Record overshoot
 
-        // Stop the motors when the turn is complete
-        RightSide.brake();
-        LeftSide.brake();
+            last_error = error;
+            pros::delay(10);
 
-        // Calculate performance metrics (overshoot, total error)
-        float overshoot = fabs(currentHeading - toHeading);
-        float totalError = fabs(error);
+        } while (std::abs(error) > 0.5);  // Exit when close to the target heading
 
-        // Log the results
-        ss << "Test Results:\n";
-        ss << "Kp: " << kp << ", Ki: " << ki << ", Kd: " << kd << "\n";
-        ss << "Overshoot: " << overshoot << ", Total Error: " << totalError << "\n";
-        logToFile(ss.str());
+        float endTime = pros::millis();
+        float timeTaken = (endTime - startTime) / 1000.0; // Time taken in seconds
 
-        // If the performance is better than before, update best PID constants
-        if (totalError < smallestError) {
-            smallestError = totalError;
-            bestKp = kp;
-            bestKi = ki;
-            bestKd = kd;
-        } else {
-            // Adjust K values for the next trial
-            kp += kp_step * (rand() % 3 - 1);  // Randomly adjust P, I, D
-            ki += ki_step * (rand() % 3 - 1);
-            kd += kd_step * (rand() % 3 - 1);
-        }
+        // Log trial results
+        std::string logMessage = "Trial " + std::to_string(trial) + " - Total Error: " + std::to_string(totalError)
+                               + " | Overshoot: " + std::to_string(overshoot) + " | Time: " + std::to_string(timeTaken);
+        logToSDCard(logMessage);
 
-        // End training if error is small and no overshoot
-        if (totalError <= 0.5 && overshoot <= 0.5) {
-            trainingComplete = true;
-        }
+        // Adjust PID constants based on performance analysis
+        adjustPIDConstants(kp, ki, kd, totalError, overshoot, timeTaken);
 
-        // Log the best PID constants so far
-        ss.str("");  // Clear previous content
-        ss << "Best PID Constants so far:\n";
-        ss << "Kp: " << bestKp << ", Ki: " << bestKi << ", Kd: " << bestKd << "\n";
-        logToFile(ss.str());
-
-        pros::delay(1000);  // Short delay to prevent screen flickering
+        // Log adjusted PID constants
+        logMessage = "Adjusted PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd);
+        logToSDCard(logMessage);
     }
 
-    // Final log entry
-    ss.str("");  // Clear previous content
-    ss << "Training complete.\n";
-    logToFile(ss.str());
+    // Final log of PID constants after training
+    logToSDCard("Final PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd));
 }
