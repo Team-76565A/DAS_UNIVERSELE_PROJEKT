@@ -40,6 +40,10 @@ ADIGyro gyro('A');
 ADIDigitalOut piston('H');
 ADIDigitalOut climb('F');
 
+
+// Important Variables
+bool learn = true;
+
 // Initialization
 void initialize() {
     pros::lcd::initialize();
@@ -88,17 +92,22 @@ void competition_initialize() {}
 void autonomous() {    
 
     //TODO etwas weiter fahren
+    if(learn == true)
+    {
+        trainPIDConstants(180, gyro, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
+    } else {
+        AutoDrive(95, -1); 
+        pros::delay(1000);
+        drehenAufGrad(25); 
+        pros::delay(1000);
+        AutoDrive(50, -1);
+        pros::delay(1000);
+        piston.set_value(true);
+        pros::delay(1000);
+        //trainPIDConstants(180, gyro, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
+        // Additional autonomous actions can be added here
+    }
     
-    AutoDrive(85, -1); 
-    pros::delay(1000);
-    drehenAufGrad(25); 
-    pros::delay(1000);
-    AutoDrive(50, -1);
-    pros::delay(1000);
-    piston.set_value(true);
-    pros::delay(1000);
-    //trainPIDConstants(180, gyro, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
-    // Additional autonomous actions can be added here
 }
 
 // Operator control
