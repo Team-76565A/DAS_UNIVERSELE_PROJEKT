@@ -8,6 +8,9 @@
 
 using namespace pros;
 
+#define ERROR_THRESHOLD 0.5 // Stop turning when error is below this value
+#define MAX_OSCILLATION 5.0 // Stop excessive oscillations
+
 // Function to get current timestamp for logging
 std::string getCurrentTimeStamp() {
     std::time_t now = std::time(nullptr);
@@ -28,31 +31,32 @@ void logToSDCard(const std::string& message) {
     }
 }
 
-// Function to adjust PID constants based on performance
+// Function to adjust PID constants based on performance metrics
 void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float overshoot, float timeTaken, float maxOscillation) {
     const float targetOvershoot = 0.0;
     const float targetError = 0.0;
-    const float targetTime = 1.0; // Ideal time to complete the turn
+    const float targetTime = 1.0; // Ideal time to complete the turn in seconds
     const float targetOscillation = 0.0; // We want minimal oscillation
-    const float learningRate = 0.1; // Control the step size for adjustments
+    const float learningRate = 0.05; // Adjust learning rate to fine-tune
 
-    // Adjust Kp: Reduce steady-state total error
+    // Adjust Kp: Reduce total error (proportional term)
     kp += learningRate * (totalError - targetError);
 
-    // Adjust Kd: Reduce overshoot and oscillations
+    // Adjust Kd: Reduce overshoot and oscillations (derivative term)
     kd += learningRate * (overshoot - targetOvershoot) + learningRate * (maxOscillation - targetOscillation);
 
-    // Adjust Ki: Improve time to reach target
+    // Adjust Ki: Improve time to reach target (integral term)
     ki += learningRate * (timeTaken - targetTime);
 
-    // Ensure the constants are positive
+    // Ensure the constants remain positive
     kp = fmax(kp, 0.0);
     ki = fmax(ki, 0.0);
     kd = fmax(kd, 0.0);
 }
 
 // Function to perform a turn and measure performance
-bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Motor_Group& RightSide, float& kp, float& ki, float& kd) {
+bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Motor_Group& RightSide, float& kp, float& ki, float& kd, 
+                 float& totalError, float& overshoot, float& timeTaken, float& maxOscillation) {
     float error = 0, last_error = 0, integral = 0, derivative = 0;
     float turnSpeed = 0;
     const float maxTurnSpeed = 200;
@@ -62,10 +66,10 @@ bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Moto
     pros::delay(100);
     float startTime = pros::millis();
     
-    // Performance metrics
-    float totalError = 0;
-    float overshoot = 0;
-    float maxOscillation = 0; // Record the highest oscillation amplitude
+    // Reset performance metrics for this turn
+    totalError = 0;
+    overshoot = 0;
+    maxOscillation = 0;
 
     // Turn loop
     while (true) {
@@ -96,18 +100,20 @@ bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Moto
             return false;  // Timeout: too slow, end early
         }
 
-        // Exit if close enough to target heading
-        if (std::abs(error) < 0.5) {
+        // **NEW: Stop when within error threshold and minimize oscillation**
+        if (std::abs(error) < ERROR_THRESHOLD && maxOscillation < MAX_OSCILLATION) {
             break;
         }
 
+        totalError += std::abs(error);  // Sum the absolute error
         last_error = error;
         pros::delay(10);
     }
 
+    // Calculate time taken
+    timeTaken = (pros::millis() - startTime) / 1000.0;
+
     // Log performance
-    float timeTaken = (pros::millis() - startTime) / 1000.0;
-    totalError += std::abs(error);
     std::string logMessage = "Turn to " + std::to_string(targetHeading) + ": Error = " + std::to_string(totalError)
                              + ", Overshoot = " + std::to_string(overshoot) + ", Oscillation = " + std::to_string(maxOscillation)
                              + ", Time = " + std::to_string(timeTaken);
@@ -129,8 +135,10 @@ void trainPIDConstants(float toHeading, ADIGyro gyro, Motor LBWheel, Motor LMWhe
 
     // Training loop for PID tuning
     for (int trial = 0; trial < 50; trial++) {
+        float totalError = 0, overshoot = 0, timeTaken = 0, maxOscillation = 0;
+
         // Perform turn to target heading
-        bool success = performTurn(toHeading, gyro, LeftSide, RightSide, kp, ki, kd);
+        bool success = performTurn(toHeading, gyro, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
 
         if (!success) {
             // Turn was too slow, log the timeout
@@ -138,10 +146,10 @@ void trainPIDConstants(float toHeading, ADIGyro gyro, Motor LBWheel, Motor LMWhe
         }
 
         // Perform turn back to 0 degrees
-        performTurn(0, gyro, LeftSide, RightSide, kp, ki, kd);
+        performTurn(0, gyro, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
 
         // Adjust PID constants based on performance metrics from the last turn
-        adjustPIDConstants(kp, ki, kd, /* totalError */, /* overshoot */, /* timeTaken */, /* maxOscillation */);
+        adjustPIDConstants(kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
 
         // Log adjusted PID constants
         std::string logMessage = "Adjusted PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd);
