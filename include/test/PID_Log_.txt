@@ -1,0 +1,47 @@
+            //          Test1       //
+Initial PID Constants: Kp = 0.870000, Ki = 0.000002, Kd = 0.005000
+Turn to 180.000000: Error = 1.000000, Overshoot = 0.000000, Time = 4.010000
+
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000: Error = 1.100000, Overshoot = 1.100000, Time = 4.010000
+
+Adjusted PID Constants: Kp = 0.871100, Ki = 0.301250, Kd = 0.006100Trial Nr.:0
+Turn to 180.000000: Error = 0.500000, Overshoot = 0.199997, Time = 1.310000
+
+Turn to 0.000000: Error = 0.700012, Overshoot = 359.899994, Time = 1.290000
+
+Adjusted PID Constants: Kp = 0.871800, Ki = 0.330250, Kd = 0.366000Trial Nr.:1
+Turn to 180.000000: Error = 0.899994, Overshoot = 0.000000, Time = 1.250000
+
+Turn to 0.000000: Error = 0.700012, Overshoot = 359.799988, Time = 1.260000
+
+Adjusted PID Constants: Kp = 0.872500, Ki = 0.356250, Kd = 0.725800Trial Nr.:2
+Turn to 180.000000: Error = 0.800003, Overshoot = 0.000000, Time = 1.230000
+
+Turn to 0.000000: Error = 0.700012, Overshoot = 359.299988, Time = 1.230000
+
+Adjusted PID Constants: Kp = 0.873200, Ki = 0.379250, Kd = 1.085100Trial Nr.:3
+Turn to 180.000000: Error = 0.600006, Overshoot = 0.000000, Time = 1.220000
+
+Turn to 0.000000: Error = 0.799988, Overshoot = 359.899994, Time = 1.220000
+
+Adjusted PID Constants: Kp = 0.874000, Ki = 0.401250, Kd = 1.445000Trial Nr.:4
+Turn to 180.000000: Error = 1.000000, Overshoot = 0.000000, Time = 1.200000
+
+Turn to 0.000000: Error = 0.500000, Overshoot = 0.200000, Time = 1.210000
+
+Adjusted PID Constants: Kp = 0.874500, Ki = 0.422250, Kd = 1.445200Trial Nr.:5
+Turn to 180.000000: Error = 0.800003, Overshoot = 0.000000, Time = 1.170000
+
+Turn to 0.000000: Error = 0.799988, Overshoot = 359.899994, Time = 1.190000
+
+Adjusted PID Constants: Kp = 0.875300, Ki = 0.441250, Kd = 1.805100Trial Nr.:6
+Turn to 180.000000: Error = 1.000000, Overshoot = 0.000000, Time = 1.170000
+
+Turn to 0.000000: Error = 0.799988, Overshoot = 359.899994, Time = 1.160000
+
+Adjusted PID Constants: Kp = 0.876100, Ki = 0.457250, Kd = 2.165000Trial Nr.:7
+Turn to 180.000000: Error = 0.800003, Overshoot = 0.000000, Time = 1.170000
+
+
+            //          Test2       //

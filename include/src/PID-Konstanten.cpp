@@ -5,11 +5,22 @@
 #include <cstdio> // For file handling functions (fopen, fputs, etc.)
 #include <ctime>  // For timestamps
 #include <sstream>
+#include <string>
 
 using namespace pros;
 
 #define ERROR_THRESHOLD 0.5 // Stop turning when error is below this value
 #define MAX_OSCILLATION 5.0 // Stop excessive oscillations
+#define MAX_KP 1.0         // Maximum allowed Kp
+#define MAX_KI 1.0          // Maximum allowed Ki
+#define MAX_KD 5.0          // Maximum allowed Kd
+
+// Function to wrap angles between -180 and 180 degrees
+float normalizeAngle(float angle) {
+    while (angle > 180.0) angle -= 360.0;
+    while (angle < -180.0) angle += 360.0;
+    return angle;
+}
 
 // Function to get current timestamp for logging
 std::string getCurrentTimeStamp() {
@@ -37,21 +48,22 @@ void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float
     const float targetError = 0.0;
     const float targetTime = 1.0; // Ideal time to complete the turn in seconds
     const float targetOscillation = 0.0; // We want minimal oscillation
-    const float learningRate = 0.05; // Adjust learning rate to fine-tune
+    const float learningRate = 0.001; // Adjust learning rate for finer control
+    const float learningRateI = 0.00001; // Finer Learning rate for ki
 
     // Adjust Kp: Reduce total error (proportional term)
     kp += learningRate * (totalError - targetError);
 
     // Adjust Kd: Reduce overshoot and oscillations (derivative term)
-    kd += learningRate * (overshoot - targetOvershoot) + learningRate * (maxOscillation - targetOscillation);
+    kd += learningRate * (overshoot - targetOvershoot) /*+ learningRate * (maxOscillation - targetOscillation)*/;
 
     // Adjust Ki: Improve time to reach target (integral term)
     ki += learningRate * (timeTaken - targetTime);
 
-    // Ensure the constants remain positive
-    kp = fmax(kp, 0.0);
-    ki = fmax(ki, 0.0);
-    kd = fmax(kd, 0.0);
+    // Cap the PID constants to prevent runaway values
+    kp = fmin(fmax(kp, 0.0), MAX_KP);
+    ki = fmin(fmax(ki, 0.0), MAX_KI);
+    kd = fmin(fmax(kd, 0.0), MAX_KD);
 }
 
 // Function to perform a turn and measure performance
@@ -62,21 +74,22 @@ bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Moto
     const float maxTurnSpeed = 200;
     const int maxTime = 4000; // 4 seconds in milliseconds
 
-    gyro.reset();
     pros::delay(100);
     float startTime = pros::millis();
     
     // Reset performance metrics for this turn
-    totalError = 0;
-    overshoot = 0;
-    maxOscillation = 0;
+    totalError = 0.0;
+    overshoot = 0.0;
+    maxOscillation = 0.0;
 
     // Turn loop
     while (true) {
         float currentHeading = std::abs(gyro.get_value()) / 10.0;  // Get current heading
-        error = targetHeading - currentHeading;                    // Calculate error
+        error = normalizeAngle(targetHeading - currentHeading);    // Normalize error
         integral += error;                                         // Accumulate integral
         derivative = error - last_error;                           // Derivative
+
+        
 
         // PID formula
         turnSpeed = (kp * error) + (ki * integral) + (kd * derivative);
@@ -90,22 +103,30 @@ bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Moto
         if (currentHeading > targetHeading) overshoot = currentHeading - targetHeading;
 
         // Record oscillation
-        if (fabs(derivative) > maxOscillation) {
+        /*if (fabs(derivative) > maxOscillation) {
             maxOscillation = fabs(derivative);  // Largest oscillation
-        }
+        }*/
 
         // Check if the time exceeds 4 seconds (timeout)
         float currentTime = pros::millis();
         if (currentTime - startTime > maxTime) {
+            // Calculate time taken
+            timeTaken = (pros::millis() - startTime) / 1000.0;
+
+            // Log performance
+            std::string logMessage = "Turn to " + std::to_string(targetHeading) + ": Error = " + std::to_string(totalError)
+                                    + ", Overshoot = " + std::to_string(overshoot) /*+ ", Oscillation = " + std::to_string(maxOscillation)*/
+                                    + ", Time = " + std::to_string(timeTaken) + "\n";
+            logToSDCard(logMessage);
             return false;  // Timeout: too slow, end early
         }
 
-        // **NEW: Stop when within error threshold and minimize oscillation**
+        // Stop if within error threshold and oscillation is minimal
         if (std::abs(error) < ERROR_THRESHOLD && maxOscillation < MAX_OSCILLATION) {
             break;
         }
 
-        totalError += std::abs(error);  // Sum the absolute error
+        totalError = std::abs(error);  // Sum the absolute error
         last_error = error;
         pros::delay(10);
     }
@@ -115,8 +136,8 @@ bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Moto
 
     // Log performance
     std::string logMessage = "Turn to " + std::to_string(targetHeading) + ": Error = " + std::to_string(totalError)
-                             + ", Overshoot = " + std::to_string(overshoot) + ", Oscillation = " + std::to_string(maxOscillation)
-                             + ", Time = " + std::to_string(timeTaken);
+                            + ", Overshoot = " + std::to_string(overshoot) /*+ ", Oscillation = " + std::to_string(maxOscillation)*/
+                            + ", Time = " + std::to_string(timeTaken) + "\n";
     logToSDCard(logMessage);
 
     return true; // Turn completed within time
@@ -152,7 +173,7 @@ void trainPIDConstants(float toHeading, ADIGyro gyro, Motor LBWheel, Motor LMWhe
         adjustPIDConstants(kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
 
         // Log adjusted PID constants
-        std::string logMessage = "Adjusted PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd);
+        std::string logMessage = "Adjusted PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki*100) + ", Kd = " + std::to_string(kd) + "Trial Nr.:" + std::to_string(trial);
         logToSDCard(logMessage);
     }
 
