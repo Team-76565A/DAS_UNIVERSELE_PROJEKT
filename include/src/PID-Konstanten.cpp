@@ -49,7 +49,7 @@ void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float
     const float targetTime = 1.0; // Ideal time to complete the turn in seconds
     const float targetOscillation = 0.0; // We want minimal oscillation
     const float learningRate = 0.001; // Adjust learning rate for finer control
-    const float learningRateI = 0.00001; // Finer Learning rate for ki
+    const float learningRateI = 0.000001; // Finer Learning rate for ki
 
     // Adjust Kp: Reduce total error (proportional term)
     kp += learningRate * (totalError - targetError);

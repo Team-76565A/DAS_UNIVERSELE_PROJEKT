@@ -39,6 +39,8 @@ Motor_Group Intake({IntakeMotor1, IntakeMotor2});
 ADIGyro gyro('A');
 ADIDigitalOut piston('H');
 ADIDigitalOut climb('F');
+Gps gps1(11, -0.11, -0.13, 180);
+Imu imu_sensor(12);
 
 
 // Important Variables
