@@ -1,4 +1,5 @@
 #include "pros/adi.hpp"
+#include "pros/imu.hpp"
 #include "pros/motors.hpp"
 #include "pros/rtos.hpp"
 #include <cmath>
@@ -58,7 +59,7 @@ void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float
     kd += learningRate * (overshoot - targetOvershoot) /*+ learningRate * (maxOscillation - targetOscillation)*/;
 
     // Adjust Ki: Improve time to reach target (integral term)
-    ki += learningRate * (timeTaken - targetTime);
+    ki += learningRateI * (timeTaken - targetTime);
 
     // Cap the PID constants to prevent runaway values
     kp = fmin(fmax(kp, 0.0), MAX_KP);
@@ -67,7 +68,7 @@ void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float
 }
 
 // Function to perform a turn and measure performance
-bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Motor_Group& RightSide, float& kp, float& ki, float& kd, 
+bool performTurn(float targetHeading, Imu& inertial, Motor_Group& LeftSide, Motor_Group& RightSide, float& kp, float& ki, float& kd, 
                  float& totalError, float& overshoot, float& timeTaken, float& maxOscillation) {
     float error = 0, last_error = 0, integral = 0, derivative = 0;
     float turnSpeed = 0;
@@ -84,7 +85,7 @@ bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Moto
 
     // Turn loop
     while (true) {
-        float currentHeading = std::abs(gyro.get_value()) / 10.0;  // Get current heading
+        float currentHeading = std::abs(inertial.get_heading());  // Get current heading
         error = normalizeAngle(targetHeading - currentHeading);    // Normalize error
         integral += error;                                         // Accumulate integral
         derivative = error - last_error;                           // Derivative
@@ -144,7 +145,7 @@ bool performTurn(float targetHeading, ADIGyro& gyro, Motor_Group& LeftSide, Moto
 }
 
 // Main function to train PID and log data
-void trainPIDConstants(float toHeading, ADIGyro gyro, Motor LBWheel, Motor LMWheel, Motor LFWheel, Motor RBWheel, Motor RMWheel, Motor RFWheel) {
+void trainPIDConstants(float toHeading, Imu inertial, Motor LBWheel, Motor LMWheel, Motor LFWheel, Motor RBWheel, Motor RMWheel, Motor RFWheel) {
     Motor_Group RightSide({RBWheel, RMWheel, RFWheel});
     Motor_Group LeftSide({LBWheel, LMWheel, LFWheel});
 
@@ -159,7 +160,7 @@ void trainPIDConstants(float toHeading, ADIGyro gyro, Motor LBWheel, Motor LMWhe
         float totalError = 0, overshoot = 0, timeTaken = 0, maxOscillation = 0;
 
         // Perform turn to target heading
-        bool success = performTurn(toHeading, gyro, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
+        bool success = performTurn(toHeading, inertial, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
 
         if (!success) {
             // Turn was too slow, log the timeout
@@ -167,7 +168,7 @@ void trainPIDConstants(float toHeading, ADIGyro gyro, Motor LBWheel, Motor LMWhe
         }
 
         // Perform turn back to 0 degrees
-        performTurn(0, gyro, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
+        performTurn(0, inertial, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
 
         // Adjust PID constants based on performance metrics from the last turn
         adjustPIDConstants(kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
