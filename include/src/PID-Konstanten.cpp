@@ -18,8 +18,8 @@ using namespace pros;
 
 // Function to wrap angles between -180 and 180 degrees
 float normalizeAngle(float angle) {
-    while (angle > 180.0) angle -= 360.0;
-    while (angle < -180.0) angle += 360.0;
+    while (angle > 180.0) angle += 360.0;
+    while (angle < -180.0) angle -= 360.0;
     return angle;
 }
 
@@ -49,8 +49,8 @@ void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float
     const float targetError = 0.0;
     const float targetTime = 1.0; // Ideal time to complete the turn in seconds
     const float targetOscillation = 0.0; // We want minimal oscillation
-    const float learningRate = 0.001; // Adjust learning rate for finer control
-    const float learningRateI = 0.000001; // Finer Learning rate for ki
+    const float learningRate = 0.01; // Adjust learning rate for finer control
+    const float learningRateI = 0.00001; // Finer Learning rate for ki
 
     // Adjust Kp: Reduce total error (proportional term)
     kp += learningRate * (totalError - targetError);
@@ -83,10 +83,16 @@ bool performTurn(float targetHeading, Imu& inertial, Motor_Group& LeftSide, Moto
     overshoot = 0.0;
     maxOscillation = 0.0;
 
+    //nomalise toHeading to (180/-180) value
+    if (targetHeading > 180) {
+       targetHeading = targetHeading - 360;
+    }
+
+
     // Turn loop
     while (true) {
-        float currentHeading = std::abs(inertial.get_heading());  // Get current heading
-        error = normalizeAngle(targetHeading - currentHeading);    // Normalize error
+        float currentHeading = std::abs(inertial.get_yaw());  // Get current heading
+        error = targetHeading - currentHeading;    // Normalize error
         integral += error;                                         // Accumulate integral
         derivative = error - last_error;                           // Derivative
 
@@ -115,9 +121,9 @@ bool performTurn(float targetHeading, Imu& inertial, Motor_Group& LeftSide, Moto
             timeTaken = (pros::millis() - startTime) / 1000.0;
 
             // Log performance
-            std::string logMessage = "Turn to " + std::to_string(targetHeading) + ": Error = " + std::to_string(totalError)
-                                    + ", Overshoot = " + std::to_string(overshoot) /*+ ", Oscillation = " + std::to_string(maxOscillation)*/
-                                    + ", Time = " + std::to_string(timeTaken) + "\n";
+            std::string logMessage = "Turn to " + std::to_string(targetHeading) + "\n" + ": Error = " + std::to_string(totalError)
+                                    + "\n" + ", Overshoot = " + std::to_string(overshoot) /*+ ", Oscillation = " + std::to_string(maxOscillation)*/
+                                    + "\n" + ", Time = " + std::to_string(timeTaken) + "\n";
             logToSDCard(logMessage);
             return false;  // Timeout: too slow, end early
         }
@@ -136,9 +142,9 @@ bool performTurn(float targetHeading, Imu& inertial, Motor_Group& LeftSide, Moto
     timeTaken = (pros::millis() - startTime) / 1000.0;
 
     // Log performance
-    std::string logMessage = "Turn to " + std::to_string(targetHeading) + ": Error = " + std::to_string(totalError)
-                            + ", Overshoot = " + std::to_string(overshoot) /*+ ", Oscillation = " + std::to_string(maxOscillation)*/
-                            + ", Time = " + std::to_string(timeTaken) + "\n";
+    std::string logMessage = "Turn to " +  std::to_string(targetHeading) + "\n" + "Error = " + std::to_string(totalError)
+                            + "\n" + "Overshoot = " + std::to_string(overshoot) /*+ ", Oscillation = " + std::to_string(maxOscillation)*/
+                            + "\n" + "Time = " + std::to_string(timeTaken) + "\n";
     logToSDCard(logMessage);
 
     return true; // Turn completed within time
@@ -150,7 +156,12 @@ void trainPIDConstants(float toHeading, Imu inertial, Motor LBWheel, Motor LMWhe
     Motor_Group LeftSide({LBWheel, LMWheel, LFWheel});
 
     // Initial PID values
-    float kp = 0.87, ki = 0.0000025, kd = 0.005;
+    //float kp = 0.87, ki = 0.0000025, kd = 0.005;
+    float kp = 1.0, ki = 0.065640, kd = 0.234849;
+
+
+    float lasterror;
+    float bestKP, bestKI, bestKD;
 
     // Log initial PID constants
     logToSDCard("Initial PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd));
@@ -173,8 +184,9 @@ void trainPIDConstants(float toHeading, Imu inertial, Motor LBWheel, Motor LMWhe
         // Adjust PID constants based on performance metrics from the last turn
         adjustPIDConstants(kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
 
+
         // Log adjusted PID constants
-        std::string logMessage = "Adjusted PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki*100) + ", Kd = " + std::to_string(kd) + "Trial Nr.:" + std::to_string(trial);
+        std::string logMessage = "Adjusted PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki*100) + ", Kd = " + std::to_string(kd) + " Trial Nr.:" + std::to_string(trial);
         logToSDCard(logMessage);
     }
 

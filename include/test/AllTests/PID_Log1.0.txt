@@ -1,0 +1,43 @@
+Initial PID Constants: Kp = 0.870000, Ki = 0.000002, Kd = 0.005000
+Turn to 180.000000: Error = 1.079865, Overshoot = 0.000000, Time = 4.010000
+
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000: Error = 1.017368, Overshoot = 1.015182, Time = 4.010000
+
+Adjusted PID Constants: Kp = 0.871017, Ki = 0.000551, Kd = 0.006015Trial Nr.:0
+Turn to 180.000000: Error = 1.028381, Overshoot = 0.000000, Time = 4.010000
+
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000: Error = 1.026424, Overshoot = 1.027294, Time = 4.010000
+
+Adjusted PID Constants: Kp = 0.872044, Ki = 0.000852, Kd = 0.007042Trial Nr.:1
+Turn to 180.000000: Error = 0.985870, Overshoot = 0.000000, Time = 4.010000
+
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000: Error = 0.885380, Overshoot = 0.880886, Time = 4.010000
+
+Adjusted PID Constants: Kp = 0.872929, Ki = 0.001153, Kd = 0.007923Trial Nr.:2
+Turn to 180.000000: Error = 0.867584, Overshoot = 0.000000, Time = 4.010000
+
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000: Error = 0.916029, Overshoot = 0.916372, Time = 4.010000
+
+Adjusted PID Constants: Kp = 0.873845, Ki = 0.001454, Kd = 0.008840Trial Nr.:3
+Turn to 180.000000: Error = 0.855789, Overshoot = 0.000000, Time = 4.010000
+
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000: Error = 0.837599, Overshoot = 0.836186, Time = 4.010000
+
+Adjusted PID Constants: Kp = 0.874683, Ki = 0.001755, Kd = 0.009676Trial Nr.:4
+Turn to 180.000000: Error = 0.783661, Overshoot = 0.000000, Time = 4.010000
+
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000: Error = 0.830226, Overshoot = 0.830842, Time = 4.010000
+
+Adjusted PID Constants: Kp = 0.875513, Ki = 0.002056, Kd = 0.010507Trial Nr.:5
+Turn to 180.000000: Error = 0.754913, Overshoot = 0.000000, Time = 4.010000
+
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000: Error = 0.792517, Overshoot = 0.793133, Time = 4.010000
+
+Adjusted PID Constants: Kp = 0.876306, Ki = 0.002357, Kd = 0.011300Trial Nr.:6

@@ -1,0 +1,136 @@
+#include "pros/adi.hpp"
+#include "pros/llemu.hpp"
+#include "pros/motors.hpp"
+#include "pros/rtos.hpp"
+#include <cmath>
+#include <cstdio>
+#include <ctime>
+#include <sstream>
+#include <string>
+
+using namespace pros;
+
+#define ERROR_THRESHOLD 0.5 // Stop turning when error is below this value
+#define MAX_OSCILLATION 5.0 // Stop excessive oscillations
+#define MAX_KP 10.0         // Maximum allowed Kp
+#define MAX_KI 1.0          // Maximum allowed Ki
+#define MAX_KD 5.0          // Maximum allowed Kd
+#define MAX_TIME 4000       // Maximum time allowed for a turn in milliseconds
+
+// Function to wrap angles between -180 and 180 degrees
+float normalizeAngle(float angle) {
+    while (angle > 180.0) angle -= 360.0;
+    while (angle < -180.0) angle += 360.0;
+    return angle;
+}
+
+// Function to log data to the SD card
+void logToSDCard(const std::string& message) {
+    FILE* logFile = fopen("/usd/PID_Log.txt", "a"); // Append mode
+
+    if (logFile != nullptr) {
+        fputs(message.c_str(), logFile);
+        fputs("\n", logFile);
+        fclose(logFile);
+    }
+}
+
+// Function to adjust PID constants based on performance metrics
+void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float overshoot, float timeTaken, float maxOscillation) {
+    const float targetOvershoot = 0.0;
+    const float targetError = 0.0;
+    const float targetTime = 1.0;  // Ideal time to complete the turn in seconds
+    const float targetOscillation = 0.0;
+    const float learningRate = 0.01;  // Adjust learning rate for finer control
+
+    kp += learningRate * (totalError - targetError);
+    kd += learningRate * (overshoot - targetOvershoot) + learningRate * (maxOscillation - targetOscillation);
+    ki += learningRate * (timeTaken - targetTime);
+
+    kp = fmin(fmax(kp, 0.0), MAX_KP);
+    ki = fmin(fmax(ki, 0.0), MAX_KI);
+    kd = fmin(fmax(kd, 0.0), MAX_KD);
+}
+
+// Function to turn the robot using stable PID logic with success/failure return
+bool turnToHeading(float toHeading, ADIGyro gyro, Motor_Group& LeftSide, Motor_Group& RightSide, float kp, float ki, float kd) {
+    float turnSpeed = 0;
+    const float maxTurnSpeed = 200;
+    float currentHeading = 0;
+    float error = 0, integral = 0, derivative = 0, last_error = 0;
+
+    // Start the timer to track the turn time
+    int startTime = pros::millis();
+
+    while (!(currentHeading <= toHeading + ERROR_THRESHOLD && currentHeading >= toHeading - ERROR_THRESHOLD)) {
+        currentHeading = gyro.get_value() / 10.0; // Get current heading
+        error = normalizeAngle(currentHeading - toHeading); // Calculate normalized error
+        integral += error; // Update integral
+        derivative = error - last_error; // Calculate derivative
+
+        // Calculate turn speed using PID formula
+        turnSpeed = (kp * error) + (ki * integral) + (kd * derivative);
+        turnSpeed = std::clamp(turnSpeed, -maxTurnSpeed, maxTurnSpeed);
+
+        // Move the motors
+        RightSide.move_velocity(turnSpeed);
+        LeftSide.move_velocity(-turnSpeed);
+
+        last_error = error; // Update last error
+        pros::delay(10);
+
+        // Check if the time exceeds the max allowed time
+        if (pros::millis() - startTime >= MAX_TIME) {
+            // Stop motors and return failure (timeout)
+            RightSide.brake();
+            LeftSide.brake();
+            return false;
+        }
+    }
+
+    // Stop the motors when the turn is complete
+    RightSide.brake();
+    LeftSide.brake();
+
+    return true; // Success, turn completed within time
+}
+
+// Main function to train PID and log data
+void trainPIDConstants(float toHeading, ADIGyro gyro, Motor LBWheel, Motor LMWheel, Motor LFWheel, Motor RBWheel, Motor RMWheel, Motor RFWheel) {
+    Motor_Group RightSide({RBWheel, RMWheel, RFWheel});
+    Motor_Group LeftSide({LBWheel, LMWheel, LFWheel});
+
+    // Initial PID values
+    float kp = 0.87, ki = 0.0000025, kd = 0.005;
+
+    // Log initial PID constants
+    logToSDCard("Initial PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd));
+
+    // Training loop for PID tuning
+    for (int trial = 0; trial < 50; trial++) {
+        float totalError = 0, overshoot = 0, timeTaken = 0, maxOscillation = 0;
+
+        // Perform turn to target heading and get success status
+        bool success = turnToHeading(toHeading, gyro, LeftSide, RightSide, kp, ki, kd);
+        if (!success) {
+            // Log the failure and continue to adjust PID constants
+            logToSDCard("Turn failed (> 4 seconds), adjusting PID...");
+        }
+
+        // Perform turn back to 0 degrees and get success status
+        success = turnToHeading(0, gyro, LeftSide, RightSide, kp, ki, kd);
+        if (!success) {
+            logToSDCard("Return to 0 failed (> 4 seconds), adjusting PID...");
+        }
+
+        // Adjust PID constants based on performance metrics
+        adjustPIDConstants(kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
+
+        // Log adjusted PID constants
+        std::string logMessage = "Adjusted PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd) + " Trial Nr.:" + std::to_string(trial);
+        logToSDCard(logMessage);
+    }
+
+    // Final log of PID constants after training
+    logToSDCard("Final PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd));
+}

@@ -92,6 +92,8 @@ void competition_initialize() {}
 // Autonomous
 void autonomous() {  
 
+    inertial.reset(true);
+
     //TODO etwas weiter fahren
     if(learn == true)
     {
@@ -124,42 +126,49 @@ void opcontrol() {
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
 
-    while (true) {        
-        // Print gyro value on controller screen
-        controller.print(0, 0, "Heading: %.2f", inertial.get_heading());
+    if(learn == true)
+    {
+        trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
+    } else {
+        while (true) {        
+            // Print gyro value on controller screen
+            controller.print(0, 0, "Heading: %.2f", inertial.get_yaw());
 
-        // Drive control
-        LeftSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) + 
-                      (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
-        RightSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) - 
-                       (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
-        
-        // Piston control
-        bool currentButtonStateIntake = controller.get_digital(E_CONTROLLER_DIGITAL_A);
-        if (currentButtonStateIntake && !previousButtonStateIntake) {
-            pistonActive = !pistonActive;
-            piston.set_value(pistonActive);
+            // Drive control
+            LeftSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) + 
+                        (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
+            RightSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) - 
+                        (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
+            
+            // Piston control
+            bool currentButtonStateIntake = controller.get_digital(E_CONTROLLER_DIGITAL_A);
+            if (currentButtonStateIntake && !previousButtonStateIntake) {
+                pistonActive = !pistonActive;
+                piston.set_value(pistonActive);
+            }
+            previousButtonStateIntake = currentButtonStateIntake;
+
+
+            // Climb control
+            bool currentButtonStateClimb = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+            if (currentButtonStateClimb && !previousButtonStateClimb) {
+                climbActive = !climbActive;
+                climb.set_value(climbActive);
+            }
+            previousButtonStateClimb = currentButtonStateClimb;
+
+            // Intake control
+            if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
+                Intake.move(127);  // Spin intake inwards at full speed
+            } else if (controller.get_digital(E_CONTROLLER_DIGITAL_R2)) {
+                Intake.move(-127); // Spin intake outwards at full speed
+            } else {
+                Intake.move(0);    // Stop intake
+            }
+
+            pros::delay(20);  // Delay to prevent excessive CPU usage
         }
-        previousButtonStateIntake = currentButtonStateIntake;
-
-
-		// Climb control
-        bool currentButtonStateClimb = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-        if (currentButtonStateClimb && !previousButtonStateClimb) {
-            climbActive = !climbActive;
-            climb.set_value(climbActive);
-        }
-        previousButtonStateClimb = currentButtonStateClimb;
-
-        // Intake control
-        if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
-            Intake.move(127);  // Spin intake inwards at full speed
-        } else if (controller.get_digital(E_CONTROLLER_DIGITAL_R2)) {
-            Intake.move(-127); // Spin intake outwards at full speed
-        } else {
-            Intake.move(0);    // Stop intake
-        }
-
-        pros::delay(20);  // Delay to prevent excessive CPU usage
     }
+
+    
 }
