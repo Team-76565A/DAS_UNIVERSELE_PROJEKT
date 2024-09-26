@@ -1,4 +1,5 @@
 #include "pros/adi.hpp"
+#include "pros/imu.hpp"
 #include "pros/llemu.hpp"
 #include "pros/misc.hpp"
 #include "pros/motors.hpp"
@@ -16,7 +17,7 @@ using namespace pros;
  * @param Right1, Right2, Right3 The motors on the right side of the robot.
  * @return int Returns 0 upon completion.
  */
-int turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Left1, Motor Left2, Motor Left3, Motor Right1, Motor Right2, Motor Right3) {
+int turnToHeading(float toHeading, Imu inertial, Controller controller, Motor Left1, Motor Left2, Motor Left3, Motor Right1, Motor Right2, Motor Right3) {
     // Motor groups for left and right sides
     Motor_Group RightSide({Right1, Right2, Right3});
     Motor_Group LeftSide({Left1, Left2, Left3});
@@ -35,9 +36,15 @@ int turnToHeading(float toHeading, ADIGyro gyro, Controller controller, Motor Le
     const float ki = 0.0000025;
     const float kd = 0.005;
 
+    //nomalise toHeading to (180/-180) value
+    if (toHeading > 180) {
+       toHeading = toHeading - 360;
+    }
+
+
     // Loop until the robot reaches the desired heading
     while (!(currentHeading <= toHeading + 0.8 && currentHeading >= toHeading - 0.8)) {
-        currentHeading = gyro.get_value() / 10; // Get current heading
+        currentHeading = inertial.get_yaw(); // Get current heading
         error = currentHeading - toHeading; // Calculate error
         integral += error; // Update integral
         derivative = error - last_error; // Calculate derivative
