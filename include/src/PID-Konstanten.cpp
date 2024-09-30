@@ -9,6 +9,7 @@
 #include <string>
 
 using namespace pros;
+using namespace std;
 
 // Define PID constants and thresholds
 #define ERROR_THRESHOLD 0.5   // Error tolerance to stop turning
@@ -34,8 +35,8 @@ std::string getCurrentTimeStamp() {
 }
 
 // Function to log messages to the SD card for debugging
-void logToSDCard(const std::string& message) {
-    FILE* logFile = fopen("/usd/PID_Log.txt", "a"); // Open log file in append mode
+void logToSDCard(const std::string& message, const std::string& filename) {
+    FILE* logFile = fopen(filename.c_str(), "a"); // Open log file in append mode
     if (logFile != nullptr) {
         fputs(message.c_str(), logFile);  // Write the message to the file
         fputs("\n", logFile);             // Add a newline for readability
@@ -69,7 +70,7 @@ void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float
 
 // Function to perform a turn based on the PID controller
 bool performTurn(float targetHeading, Imu& inertial, Motor_Group& LeftSide, Motor_Group& RightSide, float& kp, float& ki, float& kd, 
-                 float& totalError, float& overshoot, float& timeTaken, float& maxOscillation) {
+                 float& totalError, float& overshoot, float& timeTaken, float& maxOscillation, string& logFileName) {
     float error = 0, last_error = 0, integral = 0, derivative = 0;
     float turnSpeed = 0;
     const float maxTurnSpeed = 200;  // Max speed for turning
@@ -115,7 +116,7 @@ bool performTurn(float targetHeading, Imu& inertial, Motor_Group& LeftSide, Moto
             // Log timeout and performance data
             std::string logMessage = "Turn to " + std::to_string(targetHeading) + "\nError = " + std::to_string(totalError)
                                     + ", Overshoot = " + std::to_string(overshoot) + "\nTime = " + std::to_string(timeTaken);
-            logToSDCard(logMessage);
+            logToSDCard(logMessage, logFileName);
             return false;  // Return false if the turn took too long (timeout)
         }
 
@@ -135,7 +136,7 @@ bool performTurn(float targetHeading, Imu& inertial, Motor_Group& LeftSide, Moto
     // Log successful turn performance data
     std::string logMessage = "Turn to " +  std::to_string(targetHeading) + "\nError = " + std::to_string(totalError)
                             + "\nOvershoot = " + std::to_string(overshoot) + "\nTime = " + std::to_string(timeTaken);
-    logToSDCard(logMessage);
+    logToSDCard(logMessage, logFileName);
 
     return true;  // Return true if the turn was successful within time
 }
@@ -151,25 +152,39 @@ void trainPIDConstants(float toHeading, Imu inertial, Motor LBWheel, Motor LMWhe
 
     // Variables to track the best PID constants
     float bestKP = kp, bestKI = ki, bestKD = kd;
-    float lowestError = std::numeric_limits<float>::max();  // Track the lowest error
+    float lowestError = 180;
+
+    // Generate a new filename for the log file based on current timestamp
+    std::string logFileName = "/usd/PID_Log_" + getCurrentTimeStamp() + ".txt";
+
 
     // Log the initial PID constants
-    logToSDCard("Initial PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd));
+    logToSDCard("Initial PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd), logFileName);
 
     // Training loop: Perform multiple trials to adjust PID constants
     for (int trial = 0; trial < 50; trial++) {
         float totalError = 0, overshoot = 0, timeTaken = 0, maxOscillation = 0;
 
         // Perform turn to target heading
-        bool success = performTurn(toHeading, inertial, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
+        bool success = performTurn(toHeading, inertial, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation, logFileName);
 
         // Log if turn took too long (timeout)
         if (!success) {
-            logToSDCard("Turn too slow (> 4 seconds), adjusting PID...");
+            logToSDCard("Turn too slow (> 4 seconds), adjusting PID...", logFileName);
         }
 
+         // Track the best performing PID constants (based on lowest total error)
+        if (totalError < lowestError) {
+            lowestError = totalError;
+            bestKP = kp;
+            bestKI = ki;
+            bestKD = kd;
+        }
+
+        lowestError = totalError;
+        
         // Perform turn back to 0 degrees after each trial
-        performTurn(0, inertial, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
+        performTurn(0, inertial, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation, logFileName);
 
         // Track the best performing PID constants (based on lowest total error)
         if (totalError < lowestError) {
@@ -179,18 +194,19 @@ void trainPIDConstants(float toHeading, Imu inertial, Motor LBWheel, Motor LMWhe
             bestKD = kd;
         }
 
+        lowestError = totalError;
         // Adjust the PID constants for the next trial based on performance
         adjustPIDConstants(kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
 
         // Log adjusted PID constants
         std::string logMessage = "Adjusted PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki*100) + ", Kd = " + std::to_string(kd) + " Trial Nr.:" + std::to_string(trial);
-        logToSDCard(logMessage);
+        logToSDCard(logMessage, logFileName);
     }
 
     // Log the final PID constants after training
-    logToSDCard("Final PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd));
+    logToSDCard("Final PID Constants: Kp = " + std::to_string(kp) + ", Ki = " + std::to_string(ki) + ", Kd = " + std::to_string(kd), logFileName);
     
     // Log and display the best PID constants found during training
-    logToSDCard("Best PID Constants: Kp = " + std::to_string(bestKP) + ", Ki = " + std::to_string(bestKI) + ", Kd = " + std::to_string(bestKD));
+    logToSDCard("Best PID Constants: Kp = " + std::to_string(bestKP) + ", Ki = " + std::to_string(bestKI) + ", Kd = " + std::to_string(bestKD), logFileName);
     printf("Best PID Constants: Kp = %f, Ki = %f, Kd = %f\n", bestKP, bestKI, bestKD);
 }
