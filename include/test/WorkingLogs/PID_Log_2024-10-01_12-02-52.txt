@@ -1,0 +1,452 @@
+Initial PID Constants: Kp = 0.870000, Ki = 0.000002, Kd = 0.005000
+Turn to 180.000000
+Error = 1.093536, Overshoot = 0.000000
+Time = 4.010000
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000
+Error = 1.095891, Overshoot = 1.094318
+Time = 4.010000
+Adjusted PID Constants: Kp = 0.880959, Ki = 0.003260, Kd = 0.015943 Trial Nr.:0
+Turn to 180.000000
+Error = 0.593124, Overshoot = 0.000000
+Time = 4.010000
+Turn too slow (> 4 seconds), adjusting PID...
+Turn to 0.000000
+Error = 0.509374
+Overshoot = 0.464093
+Time = 3.730000
+Adjusted PID Constants: Kp = 0.886053, Ki = 0.005990, Kd = 0.020584 Trial Nr.:1
+Turn to 180.000000
+Error = 0.517700
+Overshoot = 0.000000
+Time = 3.490000
+Turn to 0.000000
+Error = 0.523951
+Overshoot = 0.494597
+Time = 3.550000
+Adjusted PID Constants: Kp = 0.891292, Ki = 0.008540, Kd = 0.025530 Trial Nr.:2
+Turn to 180.000000
+Error = 0.505478
+Overshoot = 0.000000
+Time = 3.180000
+Turn to 0.000000
+Error = 0.515215
+Overshoot = 0.486209
+Time = 3.250000
+Adjusted PID Constants: Kp = 0.896444, Ki = 0.010790, Kd = 0.030392 Trial Nr.:3
+Turn to 180.000000
+Error = 0.509003
+Overshoot = 0.000000
+Time = 3.010000
+Turn to 0.000000
+Error = 0.526067
+Overshoot = 0.495073
+Time = 3.110000
+Adjusted PID Constants: Kp = 0.901705, Ki = 0.012900, Kd = 0.035343 Trial Nr.:4
+Turn to 180.000000
+Error = 0.512390
+Overshoot = 0.000000
+Time = 2.990000
+Turn to 0.000000
+Error = 0.506473
+Overshoot = 0.465522
+Time = 3.020000
+Adjusted PID Constants: Kp = 0.906770, Ki = 0.014920, Kd = 0.039998 Trial Nr.:5
+Turn to 180.000000
+Error = 0.535049
+Overshoot = 0.000000
+Time = 2.850000
+Turn to 0.000000
+Error = 0.526945
+Overshoot = 0.471481
+Time = 2.820000
+Adjusted PID Constants: Kp = 0.912039, Ki = 0.016740, Kd = 0.044713 Trial Nr.:6
+Turn to 180.000000
+Error = 0.529556
+Overshoot = 0.000000
+Time = 2.760000
+Turn to 0.000000
+Error = 0.528472
+Overshoot = 0.481578
+Time = 2.770000
+Adjusted PID Constants: Kp = 0.917324, Ki = 0.018510, Kd = 0.049529 Trial Nr.:7
+Turn to 180.000000
+Error = 0.549225
+Overshoot = 0.000000
+Time = 2.690000
+Turn to 0.000000
+Error = 0.508958
+Overshoot = 0.453850
+Time = 2.700000
+Adjusted PID Constants: Kp = 0.922413, Ki = 0.020210, Kd = 0.054067 Trial Nr.:8
+Turn to 180.000000
+Error = 0.507965
+Overshoot = 0.000000
+Time = 2.630000
+Turn to 0.000000
+Error = 0.538928
+Overshoot = 0.498889
+Time = 2.630000
+Adjusted PID Constants: Kp = 0.927803, Ki = 0.021840, Kd = 0.059056 Trial Nr.:9
+Turn to 180.000000
+Error = 0.546158
+Overshoot = 0.000000
+Time = 2.530000
+Turn to 0.000000
+Error = 0.551790
+Overshoot = 0.482490
+Time = 2.580000
+Adjusted PID Constants: Kp = 0.933321, Ki = 0.023420, Kd = 0.063881 Trial Nr.:10
+Turn to 180.000000
+Error = 0.519302
+Overshoot = 0.000000
+Time = 2.470000
+Turn to 0.000000
+Error = 0.518737
+Overshoot = 0.466223
+Time = 2.560000
+Adjusted PID Constants: Kp = 0.938508, Ki = 0.024980, Kd = 0.068543 Trial Nr.:11
+Turn to 180.000000
+Error = 0.558578
+Overshoot = 0.000000
+Time = 2.470000
+Turn to 0.000000
+Error = 0.505893
+Overshoot = 0.442057
+Time = 2.510000
+Adjusted PID Constants: Kp = 0.943567, Ki = 0.026490, Kd = 0.072964 Trial Nr.:12
+Turn to 180.000000
+Error = 0.523071
+Overshoot = 0.000000
+Time = 2.440000
+Turn to 0.000000
+Error = 0.566538
+Overshoot = 0.496328
+Time = 2.430000
+Adjusted PID Constants: Kp = 0.949232, Ki = 0.027920, Kd = 0.077927 Trial Nr.:13
+Turn to 180.000000
+Error = 0.522232
+Overshoot = 0.000000
+Time = 2.400000
+Turn to 0.000000
+Error = 0.548905
+Overshoot = 0.476169
+Time = 2.410000
+Adjusted PID Constants: Kp = 0.954721, Ki = 0.029330, Kd = 0.082689 Trial Nr.:14
+Turn to 180.000000
+Error = 0.574554
+Overshoot = 0.000000
+Time = 2.360000
+Turn to 0.000000
+Error = 0.565359
+Overshoot = 0.493586
+Time = 2.370000
+Adjusted PID Constants: Kp = 0.960375, Ki = 0.030700, Kd = 0.087625 Trial Nr.:15
+Turn to 180.000000
+Error = 0.556625
+Overshoot = 0.000000
+Time = 2.330000
+Turn to 0.000000
+Error = 0.513557
+Overshoot = 0.423014
+Time = 2.340000
+Adjusted PID Constants: Kp = 0.965511, Ki = 0.032040, Kd = 0.091855 Trial Nr.:16
+Turn to 180.000000
+Error = 0.524918
+Overshoot = 0.000000
+Time = 2.290000
+Turn to 0.000000
+Error = 0.509833
+Overshoot = 0.448709
+Time = 2.300000
+Adjusted PID Constants: Kp = 0.970609, Ki = 0.033340, Kd = 0.096342 Trial Nr.:17
+Turn to 180.000000
+Error = 0.535934
+Overshoot = 0.000000
+Time = 2.260000
+Turn to 0.000000
+Error = 0.554383
+Overshoot = 0.491833
+Time = 2.260000
+Adjusted PID Constants: Kp = 0.976153, Ki = 0.034600, Kd = 0.101260 Trial Nr.:18
+Turn to 180.000000
+Error = 0.566284
+Overshoot = 0.000000
+Time = 2.240000
+Turn to 0.000000
+Error = 0.529877
+Overshoot = 0.458073
+Time = 2.260000
+Adjusted PID Constants: Kp = 0.981452, Ki = 0.035860, Kd = 0.105841 Trial Nr.:19
+Turn to 180.000000
+Error = 0.553162
+Overshoot = 0.000000
+Time = 2.220000
+Turn to 0.000000
+Error = 0.512893
+Overshoot = 0.427251
+Time = 2.230000
+Adjusted PID Constants: Kp = 0.986580, Ki = 0.037090, Kd = 0.110113 Trial Nr.:20
+Turn to 180.000000
+Error = 0.556213
+Overshoot = 0.000000
+Time = 2.200000
+Turn to 0.000000
+Error = 0.500881
+Overshoot = 0.420350
+Time = 2.200000
+Adjusted PID Constants: Kp = 0.991589, Ki = 0.038290, Kd = 0.114317 Trial Nr.:21
+Turn to 180.000000
+Error = 0.533081
+Overshoot = 0.000000
+Time = 2.160000
+Turn to 0.000000
+Error = 0.520594
+Overshoot = 0.444094
+Time = 2.180000
+Adjusted PID Constants: Kp = 0.996795, Ki = 0.039470, Kd = 0.118758 Trial Nr.:22
+Turn to 180.000000
+Error = 0.541824
+Overshoot = 0.000000
+Time = 2.150000
+Turn to 0.000000
+Error = 0.537336
+Overshoot = 0.453015
+Time = 2.140000
+Adjusted PID Constants: Kp = 1.002169, Ki = 0.040610, Kd = 0.123288 Trial Nr.:23
+Turn to 180.000000
+Error = 0.516037
+Overshoot = 0.000000
+Time = 2.130000
+Turn to 0.000000
+Error = 0.549445
+Overshoot = 0.468251
+Time = 2.130000
+Adjusted PID Constants: Kp = 1.007663, Ki = 0.041740, Kd = 0.127971 Trial Nr.:24
+Turn to 180.000000
+Error = 0.594696
+Overshoot = 0.000000
+Time = 2.090000
+Turn to 0.000000
+Error = 0.508187
+Overshoot = 0.417846
+Time = 2.130000
+Adjusted PID Constants: Kp = 1.012745, Ki = 0.042870, Kd = 0.132149 Trial Nr.:25
+Turn to 180.000000
+Error = 0.575623
+Overshoot = 0.000000
+Time = 2.080000
+Turn to 0.000000
+Error = 0.570779
+Overshoot = 0.471141
+Time = 2.090000
+Adjusted PID Constants: Kp = 1.018453, Ki = 0.043960, Kd = 0.136860 Trial Nr.:26
+Turn to 180.000000
+Error = 0.536880
+Overshoot = 0.000000
+Time = 2.070000
+Turn to 0.000000
+Error = 0.542299
+Overshoot = 0.452108
+Time = 2.060000
+Adjusted PID Constants: Kp = 1.023876, Ki = 0.045020, Kd = 0.141381 Trial Nr.:27
+Turn to 180.000000
+Error = 0.567307
+Overshoot = 0.000000
+Time = 2.030000
+Turn to 0.000000
+Error = 0.510389
+Overshoot = 0.406979
+Time = 2.040000
+Adjusted PID Constants: Kp = 1.028980, Ki = 0.046060, Kd = 0.145451 Trial Nr.:28
+Turn to 180.000000
+Error = 0.577927
+Overshoot = 0.000000
+Time = 2.000000
+Turn to 0.000000
+Error = 0.554847
+Overshoot = 0.456250
+Time = 2.030000
+Adjusted PID Constants: Kp = 1.034528, Ki = 0.047090, Kd = 0.150014 Trial Nr.:29
+Turn to 180.000000
+Error = 0.542755
+Overshoot = 0.000000
+Time = 2.030000
+Turn to 0.000000
+Error = 0.504928
+Overshoot = 0.386626
+Time = 2.010000
+Adjusted PID Constants: Kp = 1.039577, Ki = 0.048100, Kd = 0.153880 Trial Nr.:30
+Turn to 180.000000
+Error = 0.559998
+Overshoot = 0.000000
+Time = 2.000000
+Turn to 0.000000
+Error = 0.587609
+Overshoot = 0.478114
+Time = 1.960000
+Adjusted PID Constants: Kp = 1.045453, Ki = 0.049060, Kd = 0.158661 Trial Nr.:31
+Turn to 180.000000
+Error = 0.589966
+Overshoot = 0.000000
+Time = 1.960000
+Turn to 0.000000
+Error = 0.572016
+Overshoot = 0.463194
+Time = 1.980000
+Adjusted PID Constants: Kp = 1.051173, Ki = 0.050040, Kd = 0.163293 Trial Nr.:32
+Turn to 180.000000
+Error = 0.603546
+Overshoot = 0.000000
+Time = 1.970000
+Turn to 0.000000
+Error = 0.572161
+Overshoot = 0.458320
+Time = 1.970000
+Adjusted PID Constants: Kp = 1.056895, Ki = 0.051010, Kd = 0.167876 Trial Nr.:33
+Turn to 180.000000
+Error = 0.569214
+Overshoot = 0.000000
+Time = 1.940000
+Turn to 0.000000
+Error = 0.512614
+Overshoot = 0.395216
+Time = 1.940000
+Adjusted PID Constants: Kp = 1.062021, Ki = 0.051950, Kd = 0.171828 Trial Nr.:34
+Turn to 180.000000
+Error = 0.599747
+Overshoot = 0.000000
+Time = 1.930000
+Turn to 0.000000
+Error = 0.554140
+Overshoot = 0.439314
+Time = 1.950000
+Adjusted PID Constants: Kp = 1.067563, Ki = 0.052900, Kd = 0.176222 Trial Nr.:35
+Turn to 180.000000
+Error = 0.560577
+Overshoot = 0.000000
+Time = 1.900000
+Turn to 0.000000
+Error = 0.575928
+Overshoot = 0.470017
+Time = 1.930000
+Adjusted PID Constants: Kp = 1.073322, Ki = 0.053830, Kd = 0.180922 Trial Nr.:36
+Turn to 180.000000
+Error = 0.550201
+Overshoot = 0.000000
+Time = 1.900000
+Turn to 0.000000
+Error = 0.609913
+Overshoot = 0.487691
+Time = 1.910000
+Adjusted PID Constants: Kp = 1.079421, Ki = 0.054740, Kd = 0.185799 Trial Nr.:37
+Turn to 180.000000
+Error = 0.529785
+Overshoot = 0.000000
+Time = 1.900000
+Turn to 0.000000
+Error = 0.543827
+Overshoot = 0.427060
+Time = 1.890000
+Adjusted PID Constants: Kp = 1.084859, Ki = 0.055630, Kd = 0.190069 Trial Nr.:38
+Turn to 180.000000
+Error = 0.557449
+Overshoot = 0.000000
+Time = 1.880000
+Turn to 0.000000
+Error = 0.500903
+Overshoot = 0.367149
+Time = 1.870000
+Adjusted PID Constants: Kp = 1.089868, Ki = 0.056500, Kd = 0.193741 Trial Nr.:39
+Turn to 180.000000
+Error = 0.510803
+Overshoot = 0.000000
+Time = 1.870000
+Turn to 0.000000
+Error = 0.588459
+Overshoot = 0.439979
+Time = 1.860000
+Adjusted PID Constants: Kp = 1.095753, Ki = 0.057360, Kd = 0.198141 Trial Nr.:40
+Turn to 180.000000
+Error = 0.557434
+Overshoot = 0.000000
+Time = 1.870000
+Turn to 0.000000
+Error = 0.509672
+Overshoot = 0.364382
+Time = 1.850000
+Adjusted PID Constants: Kp = 1.100850, Ki = 0.058210, Kd = 0.201784 Trial Nr.:41
+Turn to 180.000000
+Error = 0.578491
+Overshoot = 0.000000
+Time = 1.850000
+Turn to 0.000000
+Error = 0.586030
+Overshoot = 0.445890
+Time = 1.830000
+Adjusted PID Constants: Kp = 1.106710, Ki = 0.059040, Kd = 0.206243 Trial Nr.:42
+Turn to 180.000000
+Error = 0.622360
+Overshoot = 0.000000
+Time = 1.810000
+Turn to 0.000000
+Error = 0.520465
+Overshoot = 0.382757
+Time = 1.840000
+Adjusted PID Constants: Kp = 1.111915, Ki = 0.059880, Kd = 0.210071 Trial Nr.:43
+Turn to 180.000000
+Error = 0.545746
+Overshoot = 0.000000
+Time = 1.830000
+Turn to 0.000000
+Error = 0.557719
+Overshoot = 0.418004
+Time = 1.820000
+Adjusted PID Constants: Kp = 1.117492, Ki = 0.060700, Kd = 0.214251 Trial Nr.:44
+Turn to 180.000000
+Error = 0.627670
+Overshoot = 0.000000
+Time = 1.810000
+Turn to 0.000000
+Error = 0.627882
+Overshoot = 0.469182
+Time = 1.780000
+Adjusted PID Constants: Kp = 1.123771, Ki = 0.061480, Kd = 0.218943 Trial Nr.:45
+Turn to 180.000000
+Error = 0.603775
+Overshoot = 0.000000
+Time = 1.790000
+Turn to 0.000000
+Error = 0.550929
+Overshoot = 0.402543
+Time = 1.810000
+Adjusted PID Constants: Kp = 1.129280, Ki = 0.062290, Kd = 0.222968 Trial Nr.:46
+Turn to 180.000000
+Error = 0.636856
+Overshoot = 0.000000
+Time = 1.770000
+Turn to 0.000000
+Error = 0.624007
+Overshoot = 0.475290
+Time = 1.780000
+Adjusted PID Constants: Kp = 1.135520, Ki = 0.063070, Kd = 0.227721 Trial Nr.:47
+Turn to 180.000000
+Error = 0.533844
+Overshoot = 0.000000
+Time = 1.790000
+Turn to 0.000000
+Error = 0.573678
+Overshoot = 0.424514
+Time = 1.760000
+Adjusted PID Constants: Kp = 1.141257, Ki = 0.063830, Kd = 0.231966 Trial Nr.:48
+Turn to 180.000000
+Error = 0.636276
+Overshoot = 0.000000
+Time = 1.760000
+Turn to 0.000000
+Error = 0.530413
+Overshoot = 0.391305
+Time = 1.770000
+Adjusted PID Constants: Kp = 1.146561, Ki = 0.064600, Kd = 0.235879 Trial Nr.:49
+Final PID Constants: Kp = 1.146561, Ki = 0.000646, Kd = 0.235879
+Best PID Constants: Kp = 1.141257, Ki = 0.000638, Kd = 0.231966
