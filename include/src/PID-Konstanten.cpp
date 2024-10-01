@@ -14,7 +14,7 @@ using namespace std;
 // Define PID constants and thresholds
 #define ERROR_THRESHOLD 0.5   // Error tolerance to stop turning
 #define MAX_OSCILLATION 5.0   // Limit oscillation to stop
-#define MAX_KP 1.0            // Max value for Kp (proportional gain)
+#define MAX_KP 10.0            // Max value for Kp (proportional gain)
 #define MAX_KI 1.0            // Max value for Ki (integral gain)
 #define MAX_KD 5.0            // Max value for Kd (derivative gain)
 
@@ -48,10 +48,10 @@ void logToSDCard(const std::string& message, const std::string& filename) {
 void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float overshoot, float timeTaken, float maxOscillation) {
     const float targetOvershoot = 0.0;    // Target is no overshoot
     const float targetError = 0.0;        // Target is no error
-    const float targetTime = 1.0;         // Target time to complete the turn (in seconds)
+    const float targetTime = 0.5;         // Target time to complete the turn (in seconds)
     const float targetOscillation = 0.0;  // Minimal oscillation is desired
     const float learningRate = 0.01;      // Learning rate for Kp and Kd adjustments
-    const float learningRateI = 0.00001;  // Slower learning rate for Ki (integral gain)
+    const float learningRateI = 0.001;  // Slower learning rate for Ki (integral gain)
 
     // Adjust Kp to reduce total error (proportional adjustment)
     kp += learningRate * (totalError - targetError);
@@ -148,11 +148,22 @@ void trainPIDConstants(float toHeading, Imu inertial, Motor LBWheel, Motor LMWhe
     Motor_Group LeftSide({LBWheel, LMWheel, LFWheel});
 
     // Initial PID constants (these will be adjusted)
-    float kp = 0.87, ki = 0.0000025, kd = 0.005;
+    //float kp = 0.87, ki = 0.0000025, kd = 0.005;
+
+    // First working try
+    //float kp = 1.141257, ki = 0.000638, kd = 0.231966;
+
+    // Second working try
+    float kp = 1.141257, ki = 0.000638, kd = 0.231966;
+
+    //float kp = 0.000057, ki = 0.000638, kd = 0.231966;
+
 
     // Variables to track the best PID constants
     float bestKP = kp, bestKI = ki, bestKD = kd;
     float lowestError = 180;
+    float lowestTime = 4;
+    float lowestOvershoot = 180;
 
     // Generate a new filename for the log file based on current timestamp
     std::string logFileName = "/usd/PID_Log_" + getCurrentTimeStamp() + ".txt";
@@ -173,28 +184,48 @@ void trainPIDConstants(float toHeading, Imu inertial, Motor LBWheel, Motor LMWhe
             logToSDCard("Turn too slow (> 4 seconds), adjusting PID...", logFileName);
         }
 
-         // Track the best performing PID constants (based on lowest total error)
-        if (totalError < lowestError) {
+        // Track the best performing PID constants (based on lowest total error)
+        if (totalError < lowestError && timeTaken < lowestTime && overshoot < lowestOvershoot) {
             lowestError = totalError;
+            lowestTime = timeTaken;
+            lowestOvershoot = overshoot;
             bestKP = kp;
             bestKI = ki;
             bestKD = kd;
+        }   else {
+            kp = bestKP;
+            ki = bestKI;
+            kd = bestKD;
         }
 
-        lowestError = totalError;
         
         // Perform turn back to 0 degrees after each trial
-        performTurn(0, inertial, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation, logFileName);
+        success = performTurn(0, inertial, LeftSide, RightSide, kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation, logFileName);
+
+        // Log if turn took too long (timeout)
+        if (!success) {
+            logToSDCard("Turn too slow (> 4 seconds), adjusting PID...", logFileName);
+        }
+
+        // Adjust the PID constants for the next trial based on performance
+        adjustPIDConstants(kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
+
 
         // Track the best performing PID constants (based on lowest total error)
-        if (totalError < lowestError) {
+        if (totalError < lowestError && timeTaken < lowestTime && overshoot < lowestOvershoot) {
             lowestError = totalError;
+            lowestTime = timeTaken;
+            lowestOvershoot = overshoot;
             bestKP = kp;
             bestKI = ki;
             bestKD = kd;
+        }   else {
+            kp = bestKP;
+            ki = bestKI;
+            kd = bestKD;
         }
 
-        lowestError = totalError;
+
         // Adjust the PID constants for the next trial based on performance
         adjustPIDConstants(kp, ki, kd, totalError, overshoot, timeTaken, maxOscillation);
 
@@ -208,5 +239,5 @@ void trainPIDConstants(float toHeading, Imu inertial, Motor LBWheel, Motor LMWhe
     
     // Log and display the best PID constants found during training
     logToSDCard("Best PID Constants: Kp = " + std::to_string(bestKP) + ", Ki = " + std::to_string(bestKI) + ", Kd = " + std::to_string(bestKD), logFileName);
-    printf("Best PID Constants: Kp = %f, Ki = %f, Kd = %f\n", bestKP, bestKI, bestKD);
+    
 }
