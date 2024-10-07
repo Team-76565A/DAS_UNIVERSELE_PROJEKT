@@ -16,6 +16,16 @@
 
 using namespace pros;
 
+// ------------------ WICHTIGER BEREICH ------------------
+//                Definition von Variablen
+// -------------------------------------------------------
+
+#define learn false
+
+// ------------------ PORT DEFINE BEREICH ------------------
+//                   Definition von Ports
+// -------------------------------------------------------
+
 // Motor Ports Drive
 #define LBWheel_PORT 1
 #define LMWheel_PORT 3
@@ -30,6 +40,12 @@ using namespace pros;
 
 // Pneumatic Ports
 #define piston_PORT 'H'
+#define climb_PORT 'F'
+
+// Sensoren Ports
+#define gps_PORT 11
+#define inertial_PORT 18
+#define vision_PORT 21
 
 // Controller
 Controller controller(E_CONTROLLER_MASTER);
@@ -49,16 +65,13 @@ Motor IntakeMotor2(Intake2_PORT, E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_ROTA
 Motor_Group LeftSide({LBWheel, LFWheel, LMWheel});
 Motor_Group RightSide({RBWheel, RFWheel, RMWheel});
 Motor_Group Intake({IntakeMotor1, IntakeMotor2});
-
 // Sensors
 ADIDigitalOut piston(piston_PORT);
-ADIDigitalOut climb('F');
-Gps gps(11, -0.11, -0.13, 180);
-Imu inertial(18);
-Vision vision_sensor (21);
+ADIDigitalOut climb(climb_PORT);
+Gps gps(gps_PORT, -0.11, -0.13, 180);
+Imu inertial(inertial_PORT);
+Vision vision_sensor(vision_PORT);
 
-// Important Variables
-bool learn = false;
 
 // Initialization
 void initialize() {
