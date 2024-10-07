@@ -24,8 +24,12 @@ using namespace pros;
 #define RMWheel_PORT 9
 #define RFWheel_PORT 17
 
+// Intake Ports
 #define Intake1_PORT 15
 #define Intake2_PORT 16
+
+// Pneumatic Ports
+#define piston_PORT 'H'
 
 // Controller
 Controller controller(E_CONTROLLER_MASTER);
@@ -47,7 +51,7 @@ Motor_Group RightSide({RBWheel, RFWheel, RMWheel});
 Motor_Group Intake({IntakeMotor1, IntakeMotor2});
 
 // Sensors
-ADIDigitalOut piston('H');
+ADIDigitalOut piston(piston_PORT);
 ADIDigitalOut climb('F');
 Gps gps(11, -0.11, -0.13, 180);
 Imu inertial(18);
