@@ -16,12 +16,16 @@
 
 using namespace pros;
 
-#DEFINE LBWheel_PORT 1
-#DEFINE LMWheel_PORT 3
-#DEFINE LFWheel_PORT 12
-#DEFINE RBWheel_PORT 7
-#DEFINE RMWheel_PORT 9
-#DEFINE RFWheel_PORT 17
+// Motor Ports Drive
+#define LBWheel_PORT 1
+#define LMWheel_PORT 3
+#define LFWheel_PORT 12
+#define RBWheel_PORT 7
+#define RMWheel_PORT 9
+#define RFWheel_PORT 17
+
+#define Intake1_PORT 15
+#define Intake2_PORT 16
 
 // Controller
 Controller controller(E_CONTROLLER_MASTER);
@@ -34,8 +38,8 @@ Motor RBWheel(RBWheel_PORT, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_ROTATIONS)
 Motor RMWheel(RMWheel_PORT, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_ROTATIONS);
 Motor RFWheel(RFWheel_PORT, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_ROTATIONS);
 
-Motor IntakeMotor1(15, E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_ROTATIONS);
-Motor IntakeMotor2(16, E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_ROTATIONS);
+Motor IntakeMotor1(Intake1_PORT, E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_ROTATIONS);
+Motor IntakeMotor2(Intake2_PORT, E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_ROTATIONS);
 
 // Motor Groups
 Motor_Group LeftSide({LBWheel, LFWheel, LMWheel});
