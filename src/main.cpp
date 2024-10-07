@@ -22,13 +22,13 @@ Controller controller(E_CONTROLLER_MASTER);
 // Motors
 Motor LBWheel(1, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_ROTATIONS);
 Motor LMWheel(3, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_ROTATIONS);
-Motor LFWheel(4, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_ROTATIONS);
-Motor RBWheel(18, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_ROTATIONS);
+Motor LFWheel(12, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_ROTATIONS);
+Motor RBWheel(7, E_MOTOR_GEARSET_18, true, E_MOTOR_ENCODER_ROTATIONS);
 Motor RMWheel(9, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_ROTATIONS);
 Motor RFWheel(17, E_MOTOR_GEARSET_18, false, E_MOTOR_ENCODER_ROTATIONS);
 
-Motor IntakeMotor1(16, E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_ROTATIONS);
-Motor IntakeMotor2(15, E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_ROTATIONS);
+Motor IntakeMotor1(15, E_MOTOR_GEARSET_06, true, E_MOTOR_ENCODER_ROTATIONS);
+Motor IntakeMotor2(16, E_MOTOR_GEARSET_06, false, E_MOTOR_ENCODER_ROTATIONS);
 
 // Motor Groups
 Motor_Group LeftSide({LBWheel, LFWheel, LMWheel});
@@ -39,11 +39,11 @@ Motor_Group Intake({IntakeMotor1, IntakeMotor2});
 ADIDigitalOut piston('H');
 ADIDigitalOut climb('F');
 Gps gps(11, -0.11, -0.13, 180);
-Imu inertial(12);
-
+Imu inertial(18);
+Vision vision_sensor (21);
 
 // Important Variables
-bool learn = true;
+bool learn = false;
 
 // Initialization
 void initialize() {
