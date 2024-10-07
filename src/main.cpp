@@ -22,6 +22,10 @@ using namespace pros;
 
 #define learn false
 
+// Define team colors
+enum TeamColor { RED, BLUE };
+TeamColor current_team = RED;  // Set to RED or BLUE based on your team
+
 // ------------------ PORT DEFINE BEREICH ------------------
 //                   Definition von Ports
 // -------------------------------------------------------
@@ -72,6 +76,25 @@ Gps gps(gps_PORT, -0.11, -0.13, 180);
 Imu inertial(inertial_PORT);
 Vision vision_sensor(vision_PORT);
 
+// Task for vision monitoring
+void visionTask() {
+    while (true) {
+        vision_object_s_t obj = vision_sensor.get_by_size(0);  // Get the largest object
+
+        if (obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
+            int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
+            if (obj.signature == correct_signature) {
+                Intake.move(127);  // Continue intake normally
+            } else {
+                Intake.move(-127); // Reverse intake to spit out the wrong object
+            }
+        } else {
+            Intake.move(0);  // No object detected, stop intake
+        }
+
+        pros::delay(100);  // Check vision sensor every 100 ms
+    }
+}
 
 // Initialization
 void initialize() {
@@ -79,7 +102,7 @@ void initialize() {
     inertial.reset(true);
     controller.clear();
 
-    //Set Breake mode to active holding on position
+    // Set brake mode to active holding on position
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
 }
@@ -89,11 +112,6 @@ void drehenAufGrad(float toHeading) {
     turnToHeading(toHeading, inertial, controller, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     controller.clear();
     controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
-}
-
-// Map analog value
-int mapAnalogValue(int x) {
-    return -200 + (200.0 / 127) * (x + 127);
 }
 
 // Drive PID
@@ -107,24 +125,16 @@ int AutoDrive(float cm, int direction) {
     RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
 
     return 0;
-    
 }
-
-
-// Disabled state
-void disabled() {}
-
-// Competition initialization
-void competition_initialize() {}
 
 // Autonomous
 void autonomous() {  
-
     inertial.reset(true);
 
-    //TODO etwas weiter fahren
-    if(learn == true)
-    {
+    // Start vision task in parallel
+    pros::Task vision_monitor(visionTask);
+
+    if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
         AutoDrive(95, -1); 
@@ -135,68 +145,37 @@ void autonomous() {
         pros::delay(1000);
         piston.set_value(true);
         pros::delay(1000);
-        //trainPIDConstants(180, gyro, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
-        // Additional autonomous actions can be added here
     }
-    
+
+    // Autonomous actions can continue here, while vision monitoring runs in parallel
 }
 
 // Operator control
 void opcontrol() {
-    int x = 0;
-    int y = 0;
-    bool previousButtonStateIntake = false;
-	bool previousButtonStateClimb = false;
-    bool pistonActive = false;
-	bool climbActive = false;
+    // Start vision task in parallel
+    pros::Task vision_monitor(visionTask);
 
-    //Set Breake mode to active holding on position
-    LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
-    RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
+    while (true) {
+        // Print gyro value on controller screen
+        controller.print(0, 0, "Heading: %.2f", inertial.get_yaw());
 
-    if(learn == true)
-    {
-        trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
-    } else {
-        while (true) {        
-            // Print gyro value on controller screen
-            controller.print(0, 0, "Heading: %.2f", inertial.get_yaw());
-
-            // Drive control
-            LeftSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) + 
-                        (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
-            RightSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) - 
-                        (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
-            
-            // Piston control
-            bool currentButtonStateIntake = controller.get_digital(E_CONTROLLER_DIGITAL_A);
-            if (currentButtonStateIntake && !previousButtonStateIntake) {
-                pistonActive = !pistonActive;
-                piston.set_value(pistonActive);
-            }
-            previousButtonStateIntake = currentButtonStateIntake;
-
-
-            // Climb control
-            bool currentButtonStateClimb = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-            if (currentButtonStateClimb && !previousButtonStateClimb) {
-                climbActive = !climbActive;
-                climb.set_value(climbActive);
-            }
-            previousButtonStateClimb = currentButtonStateClimb;
-
-            // Intake control
-            if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
-                Intake.move(127);  // Spin intake inwards at full speed
-            } else if (controller.get_digital(E_CONTROLLER_DIGITAL_R2)) {
-                Intake.move(-127); // Spin intake outwards at full speed
-            } else {
-                Intake.move(0);    // Stop intake
-            }
-
-            pros::delay(20);  // Delay to prevent excessive CPU usage
+        // Drive control
+        LeftSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) + 
+                    (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
+        RightSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) - 
+                    (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
+        
+        // Piston control
+        bool currentButtonStateIntake = controller.get_digital(E_CONTROLLER_DIGITAL_A);
+        static bool previousButtonStateIntake = false;
+        static bool pistonActive = false;
+        
+        if (currentButtonStateIntake && !previousButtonStateIntake) {
+            pistonActive = !pistonActive;
+            piston.set_value(pistonActive);
         }
-    }
+        previousButtonStateIntake = currentButtonStateIntake;
 
-    
+        pros::delay(20);  // Delay to prevent excessive CPU usage
+    }
 }
