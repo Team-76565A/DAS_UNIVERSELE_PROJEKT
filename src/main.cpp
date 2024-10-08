@@ -26,6 +26,8 @@ using namespace pros;
 enum TeamColor { RED, BLUE };
 TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 
+#define donutStuckMaxDist 40
+
 // ------------------ PORT DEFINE BEREICH ------------------
 //                   Definition von Ports
 // -------------------------------------------------------
@@ -50,6 +52,7 @@ TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 #define gps_PORT 11
 #define inertial_PORT 18
 #define vision_PORT 21
+#define distance_PORT 19 // noch Ändern
 
 // Controller
 Controller controller(E_CONTROLLER_MASTER);
@@ -75,18 +78,25 @@ ADIDigitalOut climb(climb_PORT);
 Gps gps(gps_PORT, -0.11, -0.13, 180);
 Imu inertial(inertial_PORT);
 Vision vision_sensor(vision_PORT);
+Distance distance_sensor(distance_PORT);
 
 // Task for vision monitoring
 void visionTask() {
     while (true) {
         vision_object_s_t obj = vision_sensor.get_by_size(0);  // Get the largest object
-
+        
         if (obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
             int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
             if (obj.signature == correct_signature) {
                 Intake.move(127);  // Continue intake normally
             } else {
-                Intake.move(-127); // Reverse intake to spit out the wrong object
+                if(distance_sensor.get() != PROS_ERR) {
+                    if(distance_sensor.get() <= donutStuckMaxDist) {
+                        Intake.move(-127);
+                    } else {
+                        Intake.move(127);
+                    }
+                }
             }
         } else {
             
@@ -169,7 +179,7 @@ void opcontrol() {
     } else {
         // Start vision task in parallel
         pros::Task vision_monitor(visionTask);
-        
+
         while (true) {        
             // Print gyro value on controller screen
             controller.print(0, 0, "Heading: %.2f", inertial.get_yaw());
