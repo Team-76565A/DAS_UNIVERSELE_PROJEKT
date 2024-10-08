@@ -84,23 +84,25 @@ Distance distance_sensor(distance_PORT);
 void visionTask() {
     while (true) {
         vision_object_s_t obj = vision_sensor.get_by_size(0);  // Get the largest object
-        
-        if (obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
-            int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
-            if (obj.signature == correct_signature) {
-                Intake.move(127);  // Continue intake normally
-            } else {
-                if(distance_sensor.get() != PROS_ERR) {
-                    if(distance_sensor.get() <= donutStuckMaxDist) {
-                        Intake.move(-127);
-                    } else {
-                        Intake.move(127);
+        if(vision_sensor.get_object_count() >= 1) {
+            if (obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
+                int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
+                if (obj.signature == correct_signature) {
+                    Intake.move(127);  // Continue intake normally
+                } else {
+                    if(distance_sensor.get() != PROS_ERR) {
+                        if(distance_sensor.get() <= donutStuckMaxDist) {
+                            Intake.move(-127);
+                        } else {
+                            Intake.move(127);
+                        }
                     }
                 }
+            } else {
+                
             }
-        } else {
-            
         }
+        
 
         pros::delay(100);  // Check vision sensor every 100 ms
     }
@@ -147,14 +149,16 @@ void autonomous() {
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
-        AutoDrive(95, -1); 
+        AutoDrive(40, 1);
+        Intake.move(127);
+        /*AutoDrive(95, -1); 
         pros::delay(1000);
         drehenAufGrad(25); 
         pros::delay(1000);
         AutoDrive(50, -1);
         pros::delay(1000);
         piston.set_value(true);
-        pros::delay(1000);
+        pros::delay(1000);*/
     }
 
     // Autonomous actions can continue here, while vision monitoring runs in parallel
