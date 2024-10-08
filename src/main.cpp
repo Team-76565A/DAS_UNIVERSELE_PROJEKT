@@ -28,6 +28,7 @@ TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 
 #define donutStuckMaxDist 40
 
+
 // ------------------ PORT DEFINE BEREICH ------------------
 //                   Definition von Ports
 // -------------------------------------------------------
@@ -82,20 +83,19 @@ Distance distance_sensor(distance_PORT);
 
 // Task for vision monitoring
 void visionTask() {
+    bool wrongDonut = false;
     while (true) {
         vision_object_s_t obj = vision_sensor.get_by_size(0);  // Get the largest object
         if(vision_sensor.get_object_count() >= 1) {
             if (obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
                 int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
-                if (obj.signature == correct_signature) {
-                    Intake.move(127);  // Continue intake normally
+                if (obj.signature == correct_signature && obj.height >= 50 && obj.width >= 200) {
+                    Intake.move_velocity(600);  // Continue intake normally
+                    wrongDonut = false;
                 } else {
-                    if(distance_sensor.get() != PROS_ERR) {
-                        if(distance_sensor.get() <= donutStuckMaxDist) {
-                            Intake.move(-127);
-                        } else {
-                            Intake.move(127);
-                        }
+                    if(obj.height >= 50 && obj.width >= 200 || wrongDonut) {
+                        wrongDonut = true;
+                        Intake.move_velocity(-600);
                     }
                 }
             } else {
@@ -149,8 +149,13 @@ void autonomous() {
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
-        AutoDrive(40, 1);
-        Intake.move(127);
+        //AutoDrive(40, 1);
+        //Intake.move_velocity(600);
+
+
+        //////////////////////////
+        //      Autocode        //
+        //////////////////////////
         /*AutoDrive(95, -1); 
         pros::delay(1000);
         drehenAufGrad(25); 
