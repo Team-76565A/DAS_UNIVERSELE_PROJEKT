@@ -53,7 +53,7 @@ TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 #define gps_PORT 11
 #define inertial_PORT 18
 #define vision_PORT 21
-#define distance_PORT 19 // noch Ändern
+#define distance_PORT 10
 
 // Controller
 Controller controller(E_CONTROLLER_MASTER);
@@ -104,7 +104,7 @@ void visionTask() {
         }
         
 
-        pros::delay(100);  // Check vision sensor every 100 ms
+        pros::delay(50);  // Check vision sensor every 100 ms
     }
 }
 
@@ -187,11 +187,13 @@ void opcontrol() {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
         // Start vision task in parallel
-        pros::Task vision_monitor(visionTask);
+        //pros::Task vision_monitor(visionTask);
 
         while (true) {        
             // Print gyro value on controller screen
-            controller.print(0, 0, "Heading: %.2f", inertial.get_yaw());
+            //ontroller.print(0, 0, "Heading: %.2f", inertial.get_yaw());
+            controller.print(0, 0, "Distance: %d", distance_sensor.get());
+
 
             // Drive control
             LeftSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) + 
