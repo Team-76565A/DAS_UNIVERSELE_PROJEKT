@@ -15,6 +15,7 @@
 #include "src/PID-Konstanten.cpp"
 
 using namespace pros;
+using namespace competition;
 
 // ------------------ WICHTIGER BEREICH ------------------
 //                Definition von Variablen
@@ -26,7 +27,9 @@ using namespace pros;
 enum TeamColor { RED, BLUE };
 TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 
-#define donutStuckMaxDist 40
+bool driving = false;
+
+#define normalStakeFlapPos 164 // Set to normal Flap position + 4
 
 
 // ------------------ PORT DEFINE BEREICH ------------------
@@ -53,7 +56,7 @@ TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 #define gps_PORT 11
 #define inertial_PORT 18
 #define vision_PORT 21
-#define distance_PORT 10
+#define rotation_PORT 10
 
 // Controller
 Controller controller(E_CONTROLLER_MASTER);
@@ -79,23 +82,52 @@ ADIDigitalOut climb(climb_PORT);
 Gps gps(gps_PORT, -0.11, -0.13, 180);
 Imu inertial(inertial_PORT);
 Vision vision_sensor(vision_PORT);
-Distance distance_sensor(distance_PORT);
+Rotation rotation_sensor(rotation_PORT);
+
+// Task for Donut stuck on Stake
+void flapCheck() {
+    int angle = rotation_sensor.get_angle() / 10;
+    int direction = 1;
+    int cm = 4;
+    while(is_autonomous()) {
+        angle = rotation_sensor.get_angle() / 10;
+        if(angle >= normalStakeFlapPos && !driving) {
+            LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
+            RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
+            direction= direction * -1;
+        } else if(!driving){
+            LeftSide.brake();
+            RightSide.brake();
+        }
+        pros::delay(50);  // Check vision sensor every 50 ms
+    }
+}
 
 // Task for vision monitoring
 void visionTask() {
     bool wrongDonut = false;
-    while (true) {
+    bool correctDonut = false;
+    int angle = rotation_sensor.get_angle() / 10;
+    while (is_autonomous()) {
         vision_object_s_t obj = vision_sensor.get_by_size(0);  // Get the largest object
+        angle = rotation_sensor.get_angle() / 10; // Get Flap angle
         if(vision_sensor.get_object_count() >= 1) {
             if (obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
                 int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
                 if (obj.signature == correct_signature && obj.height >= 50 && obj.width >= 200) {
                     Intake.move_velocity(600);  // Continue intake normally
+                    correctDonut = true;
                     wrongDonut = false;
                 } else {
-                    if(obj.height >= 50 && obj.width >= 200 || wrongDonut) {
-                        wrongDonut = true;
-                        Intake.move_velocity(-600);
+                    if(obj.height >= 50 && obj.width >= 200) {
+                        if(wrongDonut) {
+                            Intake.move_velocity(-600);
+                        } else if(!wrongDonut && angle >= normalStakeFlapPos) {
+                            wrongDonut = true;
+                        } else if(!wrongDonut && correctDonut && !(angle >= normalStakeFlapPos)) {
+                            Intake.move_velocity(600);
+                        }
+
                     }
                 }
             } else {
@@ -104,26 +136,29 @@ void visionTask() {
         }
         
 
-        pros::delay(50);  // Check vision sensor every 100 ms
+        pros::delay(20);  // Check vision sensor every 20 ms
     }
 }
 
 // Initialization
 void initialize() {
     pros::lcd::initialize();
-    inertial.reset(true);
+    
     controller.clear();
 
     // Set brake mode to active holding on position
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
+    inertial.reset(true);
 }
 
 // Turn to a specified heading
-void drehenAufGrad(float toHeading) {    
+void drehenAufGrad(float toHeading) {
+    driving = true;    
     turnToHeading(toHeading, inertial, controller, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     controller.clear();
     controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
+    driving = false;
 }
 
 // Drive PID
@@ -133,9 +168,10 @@ void drivePID(float driveFor) {
 
 // AutoDrive
 int AutoDrive(float cm, int direction) {
+    driving = true;
     LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
     RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
-
+    driving = false;
     return 0;
 }
 
@@ -145,12 +181,14 @@ void autonomous() {
 
     // Start vision task in parallel
     pros::Task vision_monitor(visionTask);
+    pros::Task flap_Wiggle(flapCheck);
 
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
         //AutoDrive(40, 1);
-        //Intake.move_velocity(600);
+        piston.set_value(true);
+        Intake.move_velocity(600);
 
 
         //////////////////////////
@@ -182,8 +220,8 @@ void opcontrol() {
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
 
-    if(learn == true)
-    {
+
+    if(learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
         // Start vision task in parallel
@@ -192,7 +230,7 @@ void opcontrol() {
         while (true) {        
             // Print gyro value on controller screen
             //ontroller.print(0, 0, "Heading: %.2f", inertial.get_yaw());
-            controller.print(0, 0, "Distance: %d", distance_sensor.get());
+            controller.print(0, 0, "Rotation: %d", rotation_sensor.get_angle());
 
 
             // Drive control
