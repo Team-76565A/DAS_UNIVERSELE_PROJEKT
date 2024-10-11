@@ -123,6 +123,7 @@ void visionTask() {
                         if(wrongDonut) {
                             Intake.move_velocity(-600);
                         } else if(!wrongDonut && angle >= normalStakeFlapPos) {
+                            correctDonut = false;
                             wrongDonut = true;
                         } else if(!wrongDonut && correctDonut && !(angle >= normalStakeFlapPos)) {
                             Intake.move_velocity(600);
