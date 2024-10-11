@@ -29,7 +29,7 @@ TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 
 bool driving = false;
 
-#define normalStakeFlapPos 164 // Set to normal Flap position + 4
+#define normalStakeFlapPos 16500 // Set to normal Flap position + 4
 
 
 // ------------------ PORT DEFINE BEREICH ------------------
@@ -86,11 +86,11 @@ Rotation rotation_sensor(rotation_PORT);
 
 // Task for Donut stuck on Stake
 void flapCheck() {
-    int angle = rotation_sensor.get_angle() / 10;
+    int angle = rotation_sensor.get_angle();
     int direction = 1;
-    int cm = 4;
+    int cm = 10;
     while(is_autonomous()) {
-        angle = rotation_sensor.get_angle() / 10;
+        angle = rotation_sensor.get_angle();
         if(angle >= normalStakeFlapPos && !driving) {
             LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
             RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
@@ -107,10 +107,10 @@ void flapCheck() {
 void visionTask() {
     bool wrongDonut = false;
     bool correctDonut = false;
-    int angle = rotation_sensor.get_angle() / 10;
+    int angle = rotation_sensor.get_angle();
     while (is_autonomous()) {
         vision_object_s_t obj = vision_sensor.get_by_size(0);  // Get the largest object
-        angle = rotation_sensor.get_angle() / 10; // Get Flap angle
+        angle = rotation_sensor.get_angle(); // Get Flap angle
         if(vision_sensor.get_object_count() >= 1) {
             if (obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
                 int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
