@@ -14,7 +14,7 @@ using namespace std;
 // Define PID constants and thresholds
 #define ERROR_THRESHOLD 0.5   // Error tolerance to stop turning
 #define MAX_OSCILLATION 5.0   // Limit oscillation to stop
-#define MAX_KP 10.0            // Max value for Kp (proportional gain)
+#define MAX_KP 10.0           // Max value for Kp (proportional gain)
 #define MAX_KI 1.0            // Max value for Ki (integral gain)
 #define MAX_KD 5.0            // Max value for Kd (derivative gain)
 
@@ -51,7 +51,7 @@ void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float
     const float targetTime = 0.5;         // Target time to complete the turn (in seconds)
     const float targetOscillation = 0.0;  // Minimal oscillation is desired
     const float learningRate = 0.01;      // Learning rate for Kp and Kd adjustments
-    const float learningRateI = 0.001;  // Slower learning rate for Ki (integral gain)
+    const float learningRateI = 0.001;    // Slower learning rate for Ki (integral gain)
 
     // Adjust Kp to reduce total error (proportional adjustment)
     kp += learningRate * (totalError - targetError);

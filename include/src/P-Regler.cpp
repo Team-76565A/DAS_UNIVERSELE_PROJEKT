@@ -8,7 +8,7 @@
 using namespace pros;
 
 /**
- * Function to turn the robot to a specified heading using a PID controller.
+ * Function to turn the robot to a specified heading using the PID controller.
  * 
  * @param toHeading The desired heading to turn to.
  * @param gyro The gyro sensor to use for heading feedback.
