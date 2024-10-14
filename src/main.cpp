@@ -17,8 +17,8 @@
 using namespace pros;
 using namespace competition;
 
-// ------------------ WICHTIGER BEREICH ------------------
-//                Definition von Variablen
+// ------------------ IMPORTANT SECTION ------------------
+//                 Definition of Variables
 // -------------------------------------------------------
 
 #define learn false
@@ -31,9 +31,8 @@ bool driving = false;
 
 #define normalStakeFlapPos 16500 // Set to normal Flap position + 4
 
-
-// ------------------ PORT DEFINE BEREICH ------------------
-//                   Definition von Ports
+// ------------------ PORT DEFINE SECTION ------------------
+//                   Definition of Ports
 // -------------------------------------------------------
 
 // Motor Ports Drive
@@ -52,7 +51,7 @@ bool driving = false;
 #define piston_PORT 'H'
 #define climb_PORT 'F'
 
-// Sensoren Ports
+// Sensor Ports
 #define gps_PORT 11
 #define inertial_PORT 18
 #define vision_PORT 21
@@ -84,9 +83,9 @@ Imu inertial(inertial_PORT);
 Vision vision_sensor(vision_PORT);
 Rotation rotation_sensor(rotation_PORT);
 
-// ---------------------------------- Explenation flapCheck -----------------------------------
+// ---------------------------------- Explanation flapCheck -----------------------------------
 //                               Task for Donut stuck on Stake
-//      Function checks if the Rotation of the Flap is higher then the normal Flap position
+//      Function checks if the Rotation of the Flap is higher than the normal Flap position
 // --------------------------------------------------------------------------------------------
 void flapCheck() {
     int angle = rotation_sensor.get_angle();
@@ -97,7 +96,8 @@ void flapCheck() {
         if(angle >= normalStakeFlapPos && !driving) {
             LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
             RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
-            direction= direction * -1; // Direction change for the wiggle
+            direction = direction * -1; // Change direction for the wiggle
+            pros::delay(10); // Prevent overload 
         } else if(!driving){
             LeftSide.brake();
             RightSide.brake();
@@ -106,7 +106,7 @@ void flapCheck() {
     }
 }
 
-// ---------------------------------- Explenation visionTask -----------------------------------
+// ---------------------------------- Explanation visionTask -----------------------------------
 //                                 Task for checking intake Donut
 //                  Function checks the Vision Sensor in the Intake for Objects
 // ---------------------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ void visionTask() {
                     Intake.move_velocity(600);  // Continue intake normally
                     correctDonut = true;
                     wrongDonut = false;
-                } else { // if not the correct Donut
+                } else { // If not the correct Donut
                     if(obj.height >= 50 && obj.width >= 200) {
                         if(wrongDonut) {
                             Intake.move_velocity(-600); // Spit out Wrong Donut
@@ -133,31 +133,30 @@ void visionTask() {
                             wrongDonut = true;
                             Intake.move_velocity(-600); // Spit out Wrong Donut
                         } else if(!wrongDonut && correctDonut && !(angle >= normalStakeFlapPos)) {
-                            Intake.move_velocity(600); // Continue till correct Donut is on Stake
+                            Intake.move_velocity(600); // Continue until correct Donut is on Stake
                         }
-
                     }
                 }
             } else {
-                
+                // Handle error case
             }
         }
         pros::delay(20);  // Check vision sensor every 20 ms
     }
 }
 
-// ---------------------------------- Explenation initialize -----------------------------------
-//                                 function for initializiation
+// ---------------------------------- Explanation initialize -----------------------------------
+//                                 Function for initialization
 //                                Function runs before everything
-//                                   for Reset of Sensors etc.
+//                                   for Reset of Sensors, etc.
 // ---------------------------------------------------------------------------------------------
 void initialize() {
     pros::lcd::initialize();
-    controller.clear(); // Screen clear
+    controller.clear(); // Clear screen
     // Set brake mode to active holding on position
-    LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);   // Brake mode for breaking when Velocity = 0
-    RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);  // Brake mode for breaking when Velocity = 0
-    inertial.reset(true); // inertial reset
+    LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);   // Brake mode for braking when Velocity = 0
+    RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);  // Brake mode for braking when Velocity = 0
+    inertial.reset(true); // Reset inertial sensor
 }
 
 /**
@@ -180,7 +179,7 @@ void drivePID(float driveFor) {
 /**
  * Function to drive with the robot for a specified amount of cm.
  * @param cm The desired cm to drive for.
- * @param direction The desired driving direction 1 for forward and -1 for backwards
+ * @param direction The desired driving direction, 1 for forward and -1 for backward
  * @returns int Returns 0 upon completion.
  */
 int AutoDrive(float cm, int direction) {
@@ -202,10 +201,9 @@ void autonomous() {
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
-        //AutoDrive(40, 1);
+        // AutoDrive(40, 1);
         piston.set_value(true);
         Intake.move_velocity(600);
-
 
         //////////////////////////
         //      Autocode        //
@@ -219,7 +217,6 @@ void autonomous() {
         piston.set_value(true);
         pros::delay(1000);*/
     }
-
     // Autonomous actions can continue here
 }
 
@@ -228,60 +225,43 @@ void opcontrol() {
     int x = 0;
     int y = 0;
     bool previousButtonStateIntake = false;
-	bool previousButtonStateClimb = false;
+    bool previousButtonStateClimb = false;
     bool pistonActive = false;
-	bool climbActive = false;
+    bool climbActive = false;
 
-    //Set Breake mode to active holding on position
+    // Set brake mode to active holding on position
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
 
-
-    if(learn == true) {
+    if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
-        // Start vision task in parallel
-        //pros::Task vision_monitor(visionTask);
-
         while (true) {        
-            // Print gyro value on controller screen
-            //ontroller.print(0, 0, "Heading: %.2f", inertial.get_yaw());
-            controller.print(0, 0, "Rotation: %d", rotation_sensor.get_angle());
+            // Print gyro heading to controller
+            controller.clear();
+            controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
 
-
-            // Drive control
-            LeftSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) + 
-                        (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
-            RightSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) - 
-                        (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
-            
-            // Piston control
-            bool currentButtonStateIntake = controller.get_digital(E_CONTROLLER_DIGITAL_A);
-            if (currentButtonStateIntake && !previousButtonStateIntake) {
-                pistonActive = !pistonActive;
-                piston.set_value(pistonActive);
-            }
-            previousButtonStateIntake = currentButtonStateIntake;
-
-
-            // Climb control
-            bool currentButtonStateClimb = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
-            if (currentButtonStateClimb && !previousButtonStateClimb) {
+            // Button Y climb
+            if(controller.get_digital(DIGITAL_Y) && !previousButtonStateClimb) {
+                climb.set_value(!climbActive);
                 climbActive = !climbActive;
-                climb.set_value(climbActive);
             }
-            previousButtonStateClimb = currentButtonStateClimb;
+            previousButtonStateClimb = controller.get_digital(DIGITAL_Y);
 
-            // Intake control
-            if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
-                Intake.move(127);  // Spin intake inwards at full speed
-            } else if (controller.get_digital(E_CONTROLLER_DIGITAL_R2)) {
-                Intake.move(-127); // Spin intake outwards at full speed
-            } else {
-                Intake.move(0);    // Stop intake
+            // Button X piston
+            if(controller.get_digital(DIGITAL_X) && !previousButtonStateIntake) {
+                piston.set_value(!pistonActive);
+                pistonActive = !pistonActive;
             }
+            previousButtonStateIntake = controller.get_digital(DIGITAL_X);
 
-            pros::delay(20);  // Delay to prevent excessive CPU usage
+            // Drive Code
+            y = controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y); // Y-Axis
+            x = controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_X); // X-Axis
+            LeftSide.move((y + x));  // Power LeftSide
+            RightSide.move(-(y - x));  // Power RightSide
+            
+            pros::delay(20); // Small delay for smoother control
         }
     }
 }
