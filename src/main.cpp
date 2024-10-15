@@ -87,25 +87,39 @@ Rotation rotation_sensor(rotation_PORT);
 // ---------------------------------- Explanation flapCheck -----------------------------------
 //                               Task for Donut stuck on Stake
 //      Function checks if the Rotation of the Flap is higher than the normal Flap position
+//        and wiggles the robot back and forth until the flap returns to normal position.
 // --------------------------------------------------------------------------------------------
 void flapCheck() {
     int angle = rotation_sensor.get_angle();
     int direction = 1;
     int cm = 10;
-    while(is_autonomous()) {
-        angle = rotation_sensor.get_angle(); // Get Flap angle
-        if(angle >= normalStakeFlapPos && angle <= maxHoldFlapPos&& !driving) {
-            LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
-            RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
-            direction = direction * -1; // Change direction for the wiggle
-            pros::delay(40); // Prevent overload 
-        } else if(!driving){
+
+    // Keep checking as long as the robot is in autonomous mode
+    while (is_autonomous()) {
+        // Get the current flap angle
+        angle = rotation_sensor.get_angle();
+
+        // If the flap angle is greater than normal, perform the wiggle motion
+        if (angle > normalStakeFlapPos && angle <= maxHoldFlapPos && !driving) {
+            // Wiggle the robot to help the donut fall onto the stake
+            LeftSide.move_relative(direction * convertUnits(cm, "cm", "rotations"), 200);
+            RightSide.move_relative(direction * convertUnits(cm, "cm", "rotations"), -200);
+            
+            // Change direction for the wiggle
+            direction *= -1;
+
+        // If the flap is back to normal, stop wiggling
+        } else if (angle <= normalStakeFlapPos && !driving) {
             LeftSide.brake();
             RightSide.brake();
         }
-        pros::delay(50);  // Check vision sensor every 50 ms
+
+        // Delay to avoid overwhelming the CPU
+        pros::delay(50);
     }
 }
+
+
 
 // ---------------------------------- Explanation visionTask -----------------------------------
 //                                 Task for checking intake Donut
@@ -116,6 +130,7 @@ void visionTask() {
     bool correctDonut = false;
     int angle = rotation_sensor.get_angle(); // Get Flap angle
     int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
+
     while (is_autonomous()) {
         vision_object_s_t obj = vision_sensor.get_by_size(0);  // Get the largest object
         angle = rotation_sensor.get_angle(); // Get Flap angle
@@ -154,6 +169,7 @@ void visionTask() {
 void initialize() {
     pros::lcd::initialize();
     controller.clear(); // Clear screen
+    vision_sensor.set_exposure(50);
     // Set brake mode to active holding on position
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);   // Brake mode for braking when Velocity = 0
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);  // Brake mode for braking when Velocity = 0
