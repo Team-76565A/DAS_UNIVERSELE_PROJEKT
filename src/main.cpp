@@ -30,6 +30,7 @@ TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 bool driving = false;
 
 #define normalStakeFlapPos 16500 // Set to normal Flap position + 4
+#define maxHoldFlapPos 20000 // Set the max Flap position when holding an donut under it
 
 // ------------------ PORT DEFINE SECTION ------------------
 //                   Definition of Ports
@@ -93,11 +94,11 @@ void flapCheck() {
     int cm = 10;
     while(is_autonomous()) {
         angle = rotation_sensor.get_angle(); // Get Flap angle
-        if(angle >= normalStakeFlapPos && !driving) {
+        if(angle >= normalStakeFlapPos && angle <= maxHoldFlapPos&& !driving) {
             LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
             RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
             direction = direction * -1; // Change direction for the wiggle
-            pros::delay(10); // Prevent overload 
+            pros::delay(40); // Prevent overload 
         } else if(!driving){
             LeftSide.brake();
             RightSide.brake();
@@ -241,27 +242,39 @@ void opcontrol() {
             controller.clear();
             controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
 
-            // Button Y climb
-            if(controller.get_digital(DIGITAL_Y) && !previousButtonStateClimb) {
-                climb.set_value(!climbActive);
-                climbActive = !climbActive;
-            }
-            previousButtonStateClimb = controller.get_digital(DIGITAL_Y);
+          // Drive control
+            LeftSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) + 
+                        (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
+            RightSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) - 
+                        (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
 
-            // Button X piston
-            if(controller.get_digital(DIGITAL_X) && !previousButtonStateIntake) {
-                piston.set_value(!pistonActive);
+            // Piston control
+            bool currentButtonStateIntake = controller.get_digital(E_CONTROLLER_DIGITAL_A);
+            if (currentButtonStateIntake && !previousButtonStateIntake) {
                 pistonActive = !pistonActive;
+                piston.set_value(pistonActive);
             }
-            previousButtonStateIntake = controller.get_digital(DIGITAL_X);
+            previousButtonStateIntake = currentButtonStateIntake;
 
-            // Drive Code
-            y = controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y); // Y-Axis
-            x = controller.get_analog(E_CONTROLLER_ANALOG_RIGHT_X); // X-Axis
-            LeftSide.move((y + x));  // Power LeftSide
-            RightSide.move(-(y - x));  // Power RightSide
-            
-            pros::delay(20); // Small delay for smoother control
+
+            // Climb control
+            bool currentButtonStateClimb = controller.get_digital(pros::E_CONTROLLER_DIGITAL_DOWN);
+            if (currentButtonStateClimb && !previousButtonStateClimb) {
+                climbActive = !climbActive;
+                climb.set_value(climbActive);
+            }
+            previousButtonStateClimb = currentButtonStateClimb;
+
+            // Intake control
+            if (controller.get_digital(E_CONTROLLER_DIGITAL_R1)) {
+                Intake.move(127);  // Spin intake inwards at full speed
+            } else if (controller.get_digital(E_CONTROLLER_DIGITAL_R2)) {
+                Intake.move(-127); // Spin intake outwards at full speed
+            } else {
+                Intake.move(0);    // Stop intake
+            }
+
+            pros::delay(20);  // Delay to prevent excessive CPU usage
         }
     }
 }
