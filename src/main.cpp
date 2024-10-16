@@ -55,7 +55,8 @@ bool driving = false;
 // Sensor Ports
 #define gps_PORT 11
 #define inertial_PORT 18
-#define vision_PORT 21
+#define up_vision_PORT 21
+#define low_vision_PORT 13
 #define rotation_PORT 10
 
 // Controller
@@ -81,7 +82,8 @@ ADIDigitalOut piston(piston_PORT);
 ADIDigitalOut climb(climb_PORT);
 Gps gps(gps_PORT, -0.11, -0.13, 180);
 Imu inertial(inertial_PORT);
-Vision vision_sensor(vision_PORT);
+Vision up_vision_sensor(up_vision_PORT);
+Vision low_vision_sensor(low_vision_PORT);
 Rotation rotation_sensor(rotation_PORT);
 
 // ---------------------------------- Explanation flapCheck -----------------------------------
@@ -132,16 +134,16 @@ void visionTask() {
     int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
 
     while (is_autonomous()) {
-        vision_object_s_t obj = vision_sensor.get_by_size(0);  // Get the largest object
         angle = rotation_sensor.get_angle(); // Get Flap angle
-        if(vision_sensor.get_object_count() >= 1) {
-            if (obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
-                if (obj.signature == correct_signature && obj.height >= 50 && obj.width >= 200) { // Check if object is the correct Donut
+        if(up_vision_sensor.get_object_count() >= 1) {
+            vision_object_s_t low_obj = low_vision_sensor.get_by_size(0);  // Get the largest object
+            if (low_obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
+                if (low_obj.signature == correct_signature && low_obj.height >= 50 && low_obj.width >= 100) { // Check if object is the correct Donut
                     Intake.move_velocity(600);  // Continue intake normally
                     correctDonut = true;
                     wrongDonut = false;
                 } else { // If not the correct Donut
-                    if(obj.height >= 50 && obj.width >= 200) {
+                    if(low_obj.height >= 50 && low_obj.width >= 100) {
                         if(wrongDonut) {
                             Intake.move_velocity(-600); // Spit out Wrong Donut
                         } else if(!wrongDonut && angle >= normalStakeFlapPos) {
@@ -169,7 +171,10 @@ void visionTask() {
 void initialize() {
     pros::lcd::initialize();
     controller.clear(); // Clear screen
-    vision_sensor.set_exposure(50);
+
+    low_vision_sensor.set_exposure(70);
+    up_vision_sensor.set_exposure(70);
+
     // Set brake mode to active holding on position
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);   // Brake mode for braking when Velocity = 0
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);  // Brake mode for braking when Velocity = 0
@@ -258,6 +263,7 @@ void opcontrol() {
             controller.clear();
             controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
 
+
           // Drive control
             LeftSide.move((controller.get_analog(E_CONTROLLER_ANALOG_LEFT_Y)) + 
                         (controller.get_analog(E_CONTROLLER_ANALOG_LEFT_X)));
@@ -271,6 +277,7 @@ void opcontrol() {
                 piston.set_value(pistonActive);
             }
             previousButtonStateIntake = currentButtonStateIntake;
+            
 
 
             // Climb control
