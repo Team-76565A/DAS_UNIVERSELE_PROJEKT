@@ -2,6 +2,7 @@
 #include "pros/imu.hpp"
 #include "pros/motors.hpp"
 #include "pros/rtos.hpp"
+#include "toSDCard.cpp"
 #include <cmath>
 #include <cstdio>
 #include <ctime>
@@ -25,24 +26,6 @@ float normalizeAngle(float angle) {
     return angle;
 }
 
-// Function to get the current timestamp (used for logging)
-std::string getCurrentTimeStamp() {
-    std::time_t now = std::time(nullptr);
-    std::tm* tm_now = std::localtime(&now);
-    char buffer[80];
-    std::strftime(buffer, sizeof(buffer), "%Y-%m-%d_%H-%M-%S", tm_now);
-    return std::string(buffer);
-}
-
-// Function to log messages to the SD card for debugging
-void logToSDCard(const std::string& message, const std::string& filename) {
-    FILE* logFile = fopen(filename.c_str(), "a"); // Open log file in append mode
-    if (logFile != nullptr) {
-        fputs(message.c_str(), logFile);  // Write the message to the file
-        fputs("\n", logFile);             // Add a newline for readability
-        fclose(logFile);                  // Close the file
-    }
-}
 
 // Function to adjust PID constants based on performance
 void adjustPIDConstants(float& kp, float& ki, float& kd, float totalError, float overshoot, float timeTaken, float maxOscillation) {

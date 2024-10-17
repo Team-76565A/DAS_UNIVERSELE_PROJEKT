@@ -13,9 +13,13 @@
 #include "src/PID-Drive.cpp"
 #include "src/P-Regler.cpp"
 #include "src/PID-Konstanten.cpp"
+#include "src/IntakeManager.cpp"
+#include "src/toSDCard.cpp"
+
 
 using namespace pros;
 using namespace competition;
+using namespace std;
 
 // ------------------ IMPORTANT SECTION ------------------
 //                 Definition of Variables
@@ -85,6 +89,7 @@ Imu inertial(inertial_PORT);
 Vision up_vision_sensor(up_vision_PORT);
 Vision low_vision_sensor(low_vision_PORT);
 Rotation rotation_sensor(rotation_PORT);
+
 
 // ---------------------------------- Explanation flapCheck -----------------------------------
 //                               Task for Donut stuck on Stake
@@ -215,10 +220,13 @@ int AutoDrive(float cm, int direction) {
 // Autonomous
 void autonomous() {  
     inertial.reset(true);
+    // Generate a new filename for the log file based on current timestamp
+    string logFileName = "/usd/Donut_Manager_Log.txt";
 
     // Start vision task in parallel
     pros::Task vision_monitor(visionTask);
     pros::Task flap_Wiggle(flapCheck);
+    Stack donutStack(10);  // Create a stack with a capacity of 10
 
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
