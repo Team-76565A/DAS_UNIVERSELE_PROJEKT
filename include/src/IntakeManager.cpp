@@ -5,7 +5,6 @@
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
 #include "pros/rtos.h"
-//#include "toSDCard.cpp"
 #include <stack>
 #include <iostream>
 
@@ -54,7 +53,7 @@ public:
     // Pop the top element (last added element)
     Donut pop_top() {
         if (top == -1) {
-            //logToSDCard("Stack Underflow! Cannot pop from an empty stack.", logName);
+            logToSDCard("Stack Underflow! Cannot pop from an empty stack.", logName);
             return {};  // Return invalid Donut if stack is empty
         }
         Donut value = arr[top];
@@ -101,7 +100,7 @@ int addDonut(Position position, int color, Stack &stack) {
     return 0;
 }
 
-void donutManagement() {
+/*void donutManagement() {
     Stack donutStack(10);  // Create a stack with a capacity of 10
 
     // Add some donuts
@@ -119,5 +118,5 @@ void donutManagement() {
 
     // Display the stack again after popping
     donutStack.display();
-}
+}*/
 
