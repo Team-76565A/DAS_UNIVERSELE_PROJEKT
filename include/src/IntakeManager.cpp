@@ -5,16 +5,17 @@
 #include "pros/adi.hpp"
 #include "pros/motors.hpp"
 #include "pros/rtos.h"
+#include "toSDCard.cpp"
 #include <stack>
 #include <iostream>
+#include <string>
 
 using namespace pros;
 using namespace competition;
 using namespace std;
 
-#define logName "/usd/Donut_Manager_Log.txt"
 
-enum Position {DOWN, MIDDLE, TOP};
+enum Position {NONE, DOWN, MIDDLE, TOP};
 
 // Struct to hold position and color
 struct Donut {
@@ -27,6 +28,7 @@ class Stack {
     Donut* arr;  // Array to hold Donut structs
     int top;
     int capacity;
+    string logName = "/usd/Donut_Manager_Log_" + getCurrentTimeStamp() + ".txt";
 
 public:
 
@@ -42,7 +44,7 @@ public:
 
     void push(Position pos, bool col) {
         if (top == capacity - 1) {
-            //cout << "Stack Overflow! Cannot push more elements." << endl;
+            logToSDCard("Stack Overflow! Cannot push more elements.\n", logName);
             return;
         }
         top++;
@@ -79,6 +81,11 @@ public:
         return value;
     }
 
+    Donut get_Donut_Value() {
+        Donut value = arr[1];
+        return value;
+    }
+
     bool isEmpty() {
         return (top == -1);
     }
@@ -86,17 +93,32 @@ public:
     // Helper function to display stack contents
     void display() {
         if (isEmpty()) {
-            cout << "Stack is empty!" << endl;
+            logToSDCard("Stack is empty!\n", logName);
             return;
         }
         for (int i = top; i >= 0; i--) {
-            cout << "Position: " << arr[i].position << ", Color: " << arr[i].correctDonut << endl;
+            logToSDCard("Position: " + to_string(arr[i].position) + ", Color: " + to_string(arr[i].correctDonut) + "\n", logName);
         }
+    }
+
+    // Sets the position of lowest Donut
+    void set_Position(Position pos) {
+        arr[1].position = pos;
     }
 };
 
-int addDonut(Position position, int color, Stack &stack) {
+int addDonut(Position position, bool color, Stack &stack) {
     stack.push(position, color);
+    return 0;
+}
+
+int updateDonut(Position position, bool color, Stack &stack) {
+    Donut value = stack.get_Donut_Value();
+    if(value.position == MIDDLE) {
+        stack.set_Position(position);
+    } else if (value.position == TOP) {
+        stack.pop(1);
+    }
     return 0;
 }
 

@@ -67,7 +67,7 @@ template <typename T>
 T convert_args(T arg) {
 	return arg;
 }
-const char* convert_args(const std::string& arg) {
+inline const char* convert_args(const std::string& arg) {
 	return arg.c_str();
 }
 }  // namespace

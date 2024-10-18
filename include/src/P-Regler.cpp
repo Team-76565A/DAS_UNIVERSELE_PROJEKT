@@ -32,9 +32,7 @@ int turnToHeading(float toHeading, Imu inertial, Controller controller, Motor Le
     float last_error = 0;
 
     // PID coefficients
-    const float kp = 0.87;
-    const float ki = 0.0000025;
-    const float kd = 0.005;
+    const float kp = 1.141257, ki = 0.000638, kd = 0.231966;
 
     //nomalise toHeading to (180/-180) value
     if (toHeading > 180) {

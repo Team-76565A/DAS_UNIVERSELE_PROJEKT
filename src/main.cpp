@@ -13,8 +13,8 @@
 #include "src/PID-Drive.cpp"
 #include "src/P-Regler.cpp"
 #include "src/PID-Konstanten.cpp"
-#include "src/IntakeManager.cpp"
-#include "src/toSDCard.cpp"
+
+
 
 
 using namespace pros;
@@ -91,6 +91,14 @@ Vision up_vision_sensor(up_vision_PORT);
 Vision low_vision_sensor(low_vision_PORT);
 Rotation rotation_sensor(rotation_PORT);
 
+bool is_Driving() {
+    if(LeftSide.at(1).is_stopped() == 0 && RightSide.at(1).is_stopped() == 0) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 
 // ---------------------------------- Explanation flapCheck -----------------------------------
 //                               Task for Donut stuck on Stake
@@ -112,12 +120,16 @@ void flapCheck() {
             // Wiggle the robot to help the donut fall onto the stake
             LeftSide.move_relative(direction * convertUnits(cm, "cm", "rotations"), 200);
             RightSide.move_relative(direction * convertUnits(cm, "cm", "rotations"), -200);
+            if(!LeftSide.at(1).is_stopped() && !RightSide.at(1).is_stopped()) {
+                // Change direction for the wiggle
+                direction *= -1;
+            } else {
+                delay(10);
+            }
             
-            // Change direction for the wiggle
-            direction *= -1;
 
         // If the flap is back to normal, stop wiggling
-        } else if (angle <= normalStakeFlapPos && !driving) {
+        } else if (angle <= normalStakeFlapPos && !is_Driving()) {
             LeftSide.brake();
             RightSide.brake();
         }
@@ -134,28 +146,32 @@ void flapCheck() {
 //                  Function checks the Vision Sensor in the Intake for Objects
 // ---------------------------------------------------------------------------------------------
 void visionTask() {
-    bool wrongDonut = false;
-    bool correctDonut = false;
+    
     int angle = rotation_sensor.get_angle(); // Get Flap angle
     int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
-    int first = 0;
+    Position donutPosition;
+    bool first = false;
+    bool correctDonut;
 
     while (is_autonomous()) {
         angle = rotation_sensor.get_angle(); // Get Flap angle
-        if(up_vision_sensor.get_object_count() >= 1) {
-            vision_object_s_t low_obj = low_vision_sensor.get_by_size(0);  // Get the largest object
-            if (low_obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
-                if (low_obj.signature == correct_signature && low_obj.height >= 50 && low_obj.width >= 100) { // Check if object is the correct Donut
-                    if(first == 0) {
-                        addDonut(DOWN, low_obj.signature, donutStack);
-                        first++;
-                    }
+        if(low_vision_sensor.get_object_count() >= 1 || up_vision_sensor.get_object_count() >= 1) {
+            vision_object_s_t low_obj = low_vision_sensor.get_by_size(0), up_obj = up_vision_sensor.get_by_size(0);  // Get the largest object
+            if (low_obj.signature != VISION_OBJECT_ERR_SIG || up_obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
+                donutPosition = (low_obj.height >= 50 && low_obj.width >= 100) ? DOWN : (up_obj.height >= 50 && up_obj.width >= 100) ? MIDDLE : (angle >= normalStakeFlapPos) ? TOP : NONE;
+                correctDonut = (low_obj.signature == correct_signature || up_obj.signature == correct_signature) ? true : false;
+                if(!(low_obj.height >= 50 && low_obj.width >= 100) != !(up_obj.height >= 50 && up_obj.width >= 100)) {
+                    if(!(donutStack.isEmpty()) && donutPosition >= 2) {
+                        updateDonut(donutPosition, correctDonut, donutStack);
+                    } else if(!first){
+                        addDonut(donutPosition, correctDonut, donutStack);
+                        donutStack.display();
+                    } 
                     
-                } else { // If not the correct Donut
-                    if(low_obj.height >= 50 && low_obj.width >= 100) {
-                        first = 0;
-                    }
+                } else {
+                    first = false;
                 }
+                
             } else {
                 // Handle error case
             }
@@ -163,6 +179,8 @@ void visionTask() {
         pros::delay(20);  // Check vision sensor every 20 ms
     }
 }
+
+
 
 // ---------------------------------- Explanation initialize -----------------------------------
 //                                 Function for initialization
@@ -180,18 +198,20 @@ void initialize() {
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);   // Brake mode for braking when Velocity = 0
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);  // Brake mode for braking when Velocity = 0
     inertial.reset(true); // Reset inertial sensor
+    
 }
 
 /**
  * Function to turn the robot to a specified heading using the PID controller.
  * @param toHeading The desired heading to turn to.
  */
-void drehenAufGrad(float toHeading) {
-    driving = true;    
+int drehenAufGrad(float toHeading) { 
     turnToHeading(toHeading, inertial, controller, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     controller.clear();
     controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
-    driving = false;
+    delay(20);
+    while(is_Driving()) {delay(100);}
+    return 0;
 }
 
 // Drive PID
@@ -206,41 +226,34 @@ void drivePID(float driveFor) {
  * @returns int Returns 0 upon completion.
  */
 int AutoDrive(float cm, int direction) {
-    driving = true;
     LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
     RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
-    driving = false;
+    delay(20);
+    while(is_Driving()) {delay(100);}
     return 0;
+
 }
 
 // Autonomous
 void autonomous() {  
-    inertial.reset(true);
-    // Generate a new filename for the log file based on current timestamp
-    string logFileName = "/usd/Donut_Manager_Log.txt";
-
     // Start vision task in parallel
-    pros::Task vision_monitor(visionTask);
-    pros::Task flap_Wiggle(flapCheck);
+    //pros::Task vision_monitor(visionTask);
+    //pros::Task flap_Wiggle(flapCheck);
 
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
-        // AutoDrive(40, 1);
-        piston.set_value(true);
-        Intake.move_velocity(600);
 
         //////////////////////////
         //      Autocode        //
         //////////////////////////
-        /*AutoDrive(95, -1); 
-        pros::delay(1000);
+        AutoDrive(95, -1);
+        drehenAufGrad(100); 
+        AutoDrive(95, -1);
         drehenAufGrad(25); 
-        pros::delay(1000);
         AutoDrive(50, -1);
-        pros::delay(1000);
         piston.set_value(true);
-        pros::delay(1000);*/
+
     }
     // Autonomous actions can continue here
 }
@@ -257,6 +270,8 @@ void opcontrol() {
     // Set brake mode to active holding on position
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);
+
+    
 
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
