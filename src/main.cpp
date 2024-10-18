@@ -32,6 +32,7 @@ enum TeamColor { RED, BLUE };
 TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 
 bool driving = false;
+Stack donutStack(2);
 
 #define normalStakeFlapPos 16500 // Set to normal Flap position + 4
 #define maxHoldFlapPos 20000 // Set the max Flap position when holding an donut under it
@@ -137,6 +138,7 @@ void visionTask() {
     bool correctDonut = false;
     int angle = rotation_sensor.get_angle(); // Get Flap angle
     int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
+    int first = 0;
 
     while (is_autonomous()) {
         angle = rotation_sensor.get_angle(); // Get Flap angle
@@ -144,20 +146,14 @@ void visionTask() {
             vision_object_s_t low_obj = low_vision_sensor.get_by_size(0);  // Get the largest object
             if (low_obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
                 if (low_obj.signature == correct_signature && low_obj.height >= 50 && low_obj.width >= 100) { // Check if object is the correct Donut
-                    Intake.move_velocity(600);  // Continue intake normally
-                    correctDonut = true;
-                    wrongDonut = false;
+                    if(first == 0) {
+                        addDonut(DOWN, low_obj.signature, donutStack);
+                        first++;
+                    }
+                    
                 } else { // If not the correct Donut
                     if(low_obj.height >= 50 && low_obj.width >= 100) {
-                        if(wrongDonut) {
-                            Intake.move_velocity(-600); // Spit out Wrong Donut
-                        } else if(!wrongDonut && angle >= normalStakeFlapPos) {
-                            correctDonut = false;
-                            wrongDonut = true;
-                            Intake.move_velocity(-600); // Spit out Wrong Donut
-                        } else if(!wrongDonut && correctDonut && !(angle >= normalStakeFlapPos)) {
-                            Intake.move_velocity(600); // Continue until correct Donut is on Stake
-                        }
+                        first = 0;
                     }
                 }
             } else {
@@ -226,7 +222,6 @@ void autonomous() {
     // Start vision task in parallel
     pros::Task vision_monitor(visionTask);
     pros::Task flap_Wiggle(flapCheck);
-    Stack donutStack(10);  // Create a stack with a capacity of 10
 
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
