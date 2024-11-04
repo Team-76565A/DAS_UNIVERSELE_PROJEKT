@@ -1,0 +1,5 @@
+Add onScreen Position from Vision Sensor for the Donut struct.
+Set onScreen Position based on xCenter data from the obj.
+Update Correcly based on movement on the x.
+
+void for Setting onScreenPos.

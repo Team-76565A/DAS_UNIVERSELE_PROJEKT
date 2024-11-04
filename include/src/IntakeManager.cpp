@@ -21,6 +21,7 @@ enum Position {NONE, DOWN, MIDDLE, TOP};
 struct Donut {
     Position position;
     bool correctDonut;
+    int onScreenPos;
 };
 
 class Stack {
@@ -42,7 +43,7 @@ public:
         delete[] arr; // Deallocate memory when the stack is destroyed
     }
 
-    void push(Position pos, bool col) {
+    void push(Position pos, bool col, int screenPos) {
         if (top == capacity - 1) {
             logToSDCard("Stack Overflow! Cannot push more elements.\n", logName);
             return;
@@ -50,6 +51,7 @@ public:
         top++;
         arr[top].position = pos;
         arr[top].correctDonut = col;
+        arr[top].onScreenPos = screenPos;
     }
 
     // Pop the top element (last added element)
@@ -81,8 +83,26 @@ public:
         return value;
     }
 
+    // Gets Donut Value from the Top Donut
     Donut get_Donut_Value() {
-        Donut value = arr[1];
+        Donut value = arr[top];
+        return value;
+    }
+
+    // Gets Donut by Array Position
+    Donut get_By_ArrPos(int pos) {
+        Donut value = arr[pos];
+        return value;
+    }
+
+    // Gets Donut by Position
+    int get_ArrPos_By_Pos(Position pos) {
+        int value = -1;
+        for(int i; i <= capacity; i++) {
+            if(value == -1) {
+                value = (arr[i].position = pos) ? arr[i].position : value;
+            }
+        }
         return value;
     }
 
@@ -105,22 +125,30 @@ public:
     void set_Position(Position pos) {
         arr[1].position = pos;
     }
+
+    // Sets the onScreenPos of the center from the Donut
+    void update_onScreenPos(int screenPos, Position pos, bool col) {
+        Donut value = get_Donut_Value();
+        if(value.position == MIDDLE) {
+            set_Position(pos);
+        } else if (value.position == TOP) {
+            pop(1);
+        }
+
+        int arrPos = get_ArrPos_By_Pos(pos);
+        if(arr[arrPos].onScreenPos > screenPos) {
+            arr[arrPos].onScreenPos = screenPos;
+        } else if(arr[arrPos].onScreenPos < screenPos - 50) {
+            push(pos, col, screenPos);
+        }
+    }
 };
 
-int addDonut(Position position, bool color, Stack &stack) {
-    stack.push(position, color);
+int addDonut(Position position, bool color, int screenPos, Stack &stack) {
+    stack.push(position, color, screenPos);
     return 0;
 }
 
-int updateDonut(Position position, bool color, Stack &stack) {
-    Donut value = stack.get_Donut_Value();
-    if(value.position == MIDDLE) {
-        stack.set_Position(position);
-    } else if (value.position == TOP) {
-        stack.pop(1);
-    }
-    return 0;
-}
 
 /*void donutManagement() {
     Stack donutStack(10);  // Create a stack with a capacity of 10

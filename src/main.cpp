@@ -32,7 +32,7 @@ enum TeamColor { RED, BLUE };
 TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 
 bool driving = false;
-Stack donutStack(2);
+Stack stakeStack(2);
 
 #define normalStakeFlapPos 16500 // Set to normal Flap position + 4
 #define maxHoldFlapPos 20000 // Set the max Flap position when holding an donut under it
@@ -91,13 +91,23 @@ Vision up_vision_sensor(up_vision_PORT);
 Vision low_vision_sensor(low_vision_PORT);
 Rotation rotation_sensor(rotation_PORT);
 
+
 bool is_Driving() {
-    if(LeftSide.at(1).is_stopped() == 0 && RightSide.at(1).is_stopped() == 0) {
-        return true;
-    } else {
-        return false;
+    // Fetch velocities of all motors in LeftSide and RightSide
+    std::vector<double> left_velocities = LeftSide.get_actual_velocities();
+    std::vector<double> right_velocities = RightSide.get_actual_velocities();
+
+    // Check if any motor in LeftSide or RightSide is moving
+    for (double velocity : left_velocities) {
+        if (velocity != 0) return true;
     }
+    for (double velocity : right_velocities) {
+        if (velocity != 0) return true;
+    }
+
+    return false;  // Return false if all motors are stationary
 }
+
 
 
 // ---------------------------------- Explanation flapCheck -----------------------------------
@@ -146,39 +156,65 @@ void flapCheck() {
 //                  Function checks the Vision Sensor in the Intake for Objects
 // ---------------------------------------------------------------------------------------------
 void visionTask() {
-    
     int angle = rotation_sensor.get_angle(); // Get Flap angle
     int correct_signature = (current_team == RED) ? 1 : 2;  // Red = sig 1, Blue = sig 2
+    int lowScreenPos;
+    int upScreenPos;
     Position donutPosition;
-    bool first = false;
     bool correctDonut;
+    bool readyForNewLow = true;
+    bool readyForNewMiddle = true;
 
     while (is_autonomous()) {
-        angle = rotation_sensor.get_angle(); // Get Flap angle
-        if(low_vision_sensor.get_object_count() >= 1 || up_vision_sensor.get_object_count() >= 1) {
-            vision_object_s_t low_obj = low_vision_sensor.get_by_size(0), up_obj = up_vision_sensor.get_by_size(0);  // Get the largest object
-            if (low_obj.signature != VISION_OBJECT_ERR_SIG || up_obj.signature != VISION_OBJECT_ERR_SIG) {  // Check if an object is detected
-                donutPosition = (low_obj.height >= 50 && low_obj.width >= 100) ? DOWN : (up_obj.height >= 50 && up_obj.width >= 100) ? MIDDLE : (angle >= normalStakeFlapPos) ? TOP : NONE;
-                correctDonut = (low_obj.signature == correct_signature || up_obj.signature == correct_signature) ? true : false;
-                if(!(low_obj.height >= 50 && low_obj.width >= 100) != !(up_obj.height >= 50 && up_obj.width >= 100)) {
-                    if(!(donutStack.isEmpty()) && donutPosition >= 2) {
-                        updateDonut(donutPosition, correctDonut, donutStack);
-                    } else if(!first){
-                        addDonut(donutPosition, correctDonut, donutStack);
-                        donutStack.display();
-                    } 
-                    
-                } else {
-                    first = false;
-                }
-                
+        angle = rotation_sensor.get_angle(); // Get updated Flap angle
+
+        // Get the largest object detected by each sensor
+        vision_object_s_t low_obj = low_vision_sensor.get_by_size(0);
+        vision_object_s_t up_obj = up_vision_sensor.get_by_size(0);
+
+        // Check if both sensors detect a donut
+        if (low_obj.signature != VISION_OBJECT_ERR_SIG || up_obj.signature != VISION_OBJECT_ERR_SIG) {
+
+            // Set onScreenPosition
+            lowScreenPos = low_obj.x_middle_coord;
+            upScreenPos = up_obj.x_middle_coord;
+
+            // Determine the position of the donut
+            if (low_obj.width > 50 && low_obj.height > 50) {
+                donutPosition = DOWN;
+            } else if (up_obj.width > 50 && up_obj.height > 50) {
+                donutPosition = MIDDLE;
+            } else if (angle >= normalStakeFlapPos) {
+                donutPosition = TOP;
             } else {
-                // Handle error case
+                donutPosition = NONE;
+            }
+
+            // Check if the detected donut is correct based on the signature
+            correctDonut = (low_obj.signature == correct_signature || up_obj.signature == correct_signature);
+
+            // Update or add donut if the donut is correct
+            if (donutPosition != NONE) {
+                if (correctDonut) {
+                    if (!stakeStack.isEmpty()) {
+
+                    }
+                } else {
+                    // Push incorrect donut out of the intake
+                    Intake.move(-127);  // Spin intake in reverse
+                    pros::delay(1000);  // Delay for 1 second to ensure it's pushed out
+                    Intake.move(127);  // Stop the intake
+                    
+                }
+            } else {
+
             }
         }
-        pros::delay(20);  // Check vision sensor every 20 ms
+
+        pros::delay(20);  // Check sensors every 20 ms
     }
 }
+
 
 
 
@@ -210,7 +246,7 @@ int drehenAufGrad(float toHeading) {
     controller.clear();
     controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
     delay(20);
-    while(is_Driving()) {delay(100);}
+    while(is_Driving()) {delay(50);}
     return 0;
 }
 
@@ -229,7 +265,7 @@ int AutoDrive(float cm, int direction) {
     LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
     RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
     delay(20);
-    while(is_Driving()) {delay(100);}
+    while(is_Driving()) {delay(50);}
     return 0;
 
 }
@@ -237,22 +273,24 @@ int AutoDrive(float cm, int direction) {
 // Autonomous
 void autonomous() {  
     // Start vision task in parallel
-    //pros::Task vision_monitor(visionTask);
+    pros::Task vision_monitor(visionTask);
     //pros::Task flap_Wiggle(flapCheck);
 
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
+        
+
+        //Intake.move(127);
+
 
         //////////////////////////
         //      Autocode        //
         //////////////////////////
-        AutoDrive(95, -1);
-        drehenAufGrad(100); 
-        AutoDrive(95, -1);
+        /*AutoDrive(95, -1);
         drehenAufGrad(25); 
         AutoDrive(50, -1);
-        piston.set_value(true);
+        piston.set_value(true);*/
 
     }
     // Autonomous actions can continue here
