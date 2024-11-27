@@ -34,6 +34,10 @@ TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 bool driving = false;
 Stack stakeStack(2);
 
+
+// Generate a new filename for the log file based on current timestamp
+string logFileName = "/usd/Log_File_" + getCurrentTimeStamp() + ".txt";
+
 #define normalStakeFlapPos 16500 // Set to normal Flap position + 4
 #define maxHoldFlapPos 20000 // Set the max Flap position when holding an donut under it
 
@@ -243,6 +247,7 @@ void initialize() {
  */
 int drehenAufGrad(float toHeading) { 
     turnToHeading(toHeading, inertial, controller, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
+    logToSDCard("Turn", logFileName);
     controller.clear();
     controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
     delay(20);
@@ -264,6 +269,7 @@ void drivePID(float driveFor) {
 int AutoDrive(float cm, int direction) {
     LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
     RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
+    logToSDCard("Drive", logFileName);
     delay(20);
     while(is_Driving()) {delay(50);}
     return 0;
@@ -279,18 +285,14 @@ void autonomous() {
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     } else {
-        
-
-        //Intake.move(127);
-
 
         //////////////////////////
         //      Autocode        //
         //////////////////////////
-        /*AutoDrive(95, -1);
+        AutoDrive(95, -1);
         drehenAufGrad(25); 
         AutoDrive(50, -1);
-        piston.set_value(true);*/
+        piston.set_value(true);
 
     }
     // Autonomous actions can continue here

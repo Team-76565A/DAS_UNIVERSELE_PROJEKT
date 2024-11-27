@@ -16,7 +16,7 @@ using namespace pros;
  * @param CircumferenceInCm The circumference of the wheel in centimeters (default is 31.91 cm).
  * @return float The converted value.
  */
-float convertUnits(float parameter, const string& fromUnit, const string& toUnit, float CircumferenceInCm = 31.91) {
+float convertUnits(float parameter, const string& fromUnit, const string& toUnit, float CircumferenceInCm = 26) {
     if (fromUnit == "cm") {
         if (toUnit == "rotations") {
             return parameter / CircumferenceInCm;
