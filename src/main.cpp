@@ -13,6 +13,7 @@
 #include "src/PID-Drive.cpp"
 #include "src/P-Regler.cpp"
 #include "src/PID-Konstanten.cpp"
+#include <string>
 
 
 
@@ -62,7 +63,7 @@ string logFileName = "/usd/Log_File_" + getCurrentTimeStamp() + ".txt";
 #define climb_PORT 'F'
 
 // Sensor Ports
-#define gps_PORT 11
+#define gps_PORT 6
 #define inertial_PORT 18
 #define up_vision_PORT 21
 #define low_vision_PORT 13
@@ -199,10 +200,7 @@ void visionTask() {
 
             // Update or add donut if the donut is correct
             if (donutPosition != NONE) {
-                if (correctDonut) {
-                    if (!stakeStack.isEmpty()) {
-
-                    }
+                if (correctDonut) {     
                 } else {
                     // Push incorrect donut out of the intake
                     Intake.move(-127);  // Spin intake in reverse
@@ -237,7 +235,7 @@ void initialize() {
     // Set brake mode to active holding on position
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);   // Brake mode for braking when Velocity = 0
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);  // Brake mode for braking when Velocity = 0
-    inertial.reset(true); // Reset inertial sensor
+    inertial.reset(false); // Reset inertial sensor
     
 }
 
@@ -249,8 +247,8 @@ int drehenAufGrad(float toHeading) {
     turnToHeading(toHeading, inertial, controller, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
     logToSDCard("Turn", logFileName);
     controller.clear();
-    controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
-    delay(20);
+    controller.print(1, 1, "Current Heading: %f", inertial.get_yaw());
+    delay(100);
     while(is_Driving()) {delay(50);}
     return 0;
 }
@@ -267,19 +265,36 @@ void drivePID(float driveFor) {
  * @returns int Returns 0 upon completion.
  */
 int AutoDrive(float cm, int direction) {
-    LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 200);
-    RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -200);
+    double posL = LeftSide.at(0).get_position();
+    LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 1);
+    RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -1);
+    for(int i = 0; i < 200; i++) {
+        LeftSide.move_velocity(i);
+        RightSide.move_velocity(i);
+        //controller.print(0, 0, "1: %f", LeftSide.at(0).get_position()-posL);
+        controller.print(1,0, "3: %f", convertUnits(cm, "cm", "rotations"));
+        delay(5);
+    }
+    while (LeftSide.at(0).get_position()-posL < convertUnits(cm, "cm", "rotations")) {
+        controller.clear();
+        //controller.print(0, 0, "1: %f", LeftSide.at(0).get_position());
+        //controller.print(1, 0, "2: %f", posL);
+        //ontroller.print(0, 0, "1: %f", LeftSide.at(0).get_position()-posL);
+        controller.print(0,0, "2: %f", convertUnits(cm, "cm", "rotations"));
+        delay(50);
+    }
+    LeftSide.move_velocity(0);
+    RightSide.move_velocity(0);
     logToSDCard("Drive", logFileName);
-    delay(20);
+    delay(100);
     while(is_Driving()) {delay(50);}
     return 0;
-
 }
 
 // Autonomous
 void autonomous() {  
     // Start vision task in parallel
-    pros::Task vision_monitor(visionTask);
+    //pros::Task vision_monitor(visionTask);
     //pros::Task flap_Wiggle(flapCheck);
 
     if (learn == true) {
@@ -291,8 +306,9 @@ void autonomous() {
         //////////////////////////
         AutoDrive(95, -1);
         drehenAufGrad(25); 
-        AutoDrive(50, -1);
+        AutoDrive(21, -1);
         piston.set_value(true);
+        AutoDrive(2, -1);
 
     }
     // Autonomous actions can continue here
@@ -319,7 +335,7 @@ void opcontrol() {
         while (true) {        
             // Print gyro heading to controller
             controller.clear();
-            controller.print(1, 1, "Current Heading: %f", inertial.get_heading());
+            //controller.print(0, 0, "Current Heading: %f", inertial.get_yaw());
 
 
           // Drive control
@@ -355,7 +371,7 @@ void opcontrol() {
                 Intake.move(0);    // Stop intake
             }
 
-            pros::delay(20);  // Delay to prevent excessive CPU usage
+            pros::delay(50);  // Delay to prevent excessive CPU usage
         }
     }
 }

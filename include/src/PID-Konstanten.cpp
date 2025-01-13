@@ -137,9 +137,11 @@ void trainPIDConstants(float toHeading, Imu inertial, Motor LBWheel, Motor LMWhe
     //float kp = 1.141257, ki = 0.000638, kd = 0.231966;
 
     // Second working try
-    float kp = 1.141257, ki = 0.000638, kd = 0.231966;
+    //float kp = 1.141257, ki = 0.000638, kd = 0.231966;
 
     //float kp = 0.000057, ki = 0.000638, kd = 0.231966;
+
+    float kp = 0.880680, ki = 0.003513, kd = 0.015666;
 
 
     // Variables to track the best PID constants
