@@ -34,16 +34,13 @@ int turnToHeading(float toHeading, Imu inertial, Controller controller, Motor Le
     // PID coefficients
     const float kp = 0.880680, ki = 0.003513, kd = 0.015666;
 
-    //nomalise toHeading to (180/-180) value
-    if (toHeading > 180) {
-       toHeading = toHeading - 360;
-    }
 
 
     // Loop until the robot reaches the desired heading
     while (!(currentHeading <= toHeading + 0.8 && currentHeading >= toHeading - 0.8)) {
-        currentHeading = inertial.get_yaw(); // Get current heading
-        error = currentHeading - toHeading; // Calculate error
+        currentHeading = inertial.get_heading(); // Get current heading
+        // Normalize error to account for heading wraparound
+        error = currentHeading - toHeading;
         integral += error; // Update integral
         derivative = error - last_error; // Calculate derivative
 

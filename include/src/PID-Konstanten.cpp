@@ -75,7 +75,7 @@ bool performTurn(float targetHeading, Imu& inertial, Motor_Group& LeftSide, Moto
     // PID control loop for turning
     while (true) {
         // Get the current heading from the inertial sensor
-        float currentHeading = std::abs(inertial.get_yaw());  
+        float currentHeading = std::abs(inertial.get_heading());  
         error = targetHeading - currentHeading;  // Calculate error (target - current)
         integral += error;  // Accumulate integral (sum of errors)
         derivative = error - last_error;  // Derivative (rate of change of error)

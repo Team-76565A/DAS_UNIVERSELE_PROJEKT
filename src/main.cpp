@@ -266,28 +266,46 @@ void drivePID(float driveFor) {
  */
 int AutoDrive(float cm, int direction) {
     double posL = LeftSide.at(0).get_position();
-    LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), 1);
-    RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -1);
-    for(int i = 0; i < 200; i++) {
-        LeftSide.move_velocity(i);
-        RightSide.move_velocity(i);
-        //controller.print(0, 0, "1: %f", LeftSide.at(0).get_position()-posL);
-        controller.print(1,0, "3: %f", convertUnits(cm, "cm", "rotations"));
-        delay(5);
+    double targetPos = convertUnits(cm, "cm", "rotations");
+    double maxVelocity = 200; // Maximum velocity
+    double accelerationRate = 10; // Velocity increment per step
+    double decelerationDistance = targetPos * 0.2; // 20% of the distance for deceleration
+    double currentVelocity = 0;
+
+    // Gradually accelerate
+    while (currentVelocity < maxVelocity && LeftSide.at(0).get_position() - posL < targetPos - decelerationDistance) {
+        currentVelocity += accelerationRate;
+        if (currentVelocity > maxVelocity) currentVelocity = maxVelocity;
+
+        LeftSide.move_velocity(direction * currentVelocity);
+        RightSide.move_velocity(direction * currentVelocity);
+        delay(20); // Adjust the delay for smoother acceleration
     }
-    while (LeftSide.at(0).get_position()-posL < convertUnits(cm, "cm", "rotations")) {
-        controller.clear();
-        //controller.print(0, 0, "1: %f", LeftSide.at(0).get_position());
-        //controller.print(1, 0, "2: %f", posL);
-        //ontroller.print(0, 0, "1: %f", LeftSide.at(0).get_position()-posL);
-        controller.print(0,0, "2: %f", convertUnits(cm, "cm", "rotations"));
-        delay(50);
+
+    // Maintain max velocity until deceleration zone
+    while (LeftSide.at(0).get_position() - posL < targetPos - decelerationDistance) {
+        LeftSide.move_velocity(direction * maxVelocity);
+        RightSide.move_velocity(direction * maxVelocity);
+        delay(20);
     }
+
+    // Gradually decelerate
+    while (LeftSide.at(0).get_position() - posL < targetPos) {
+        currentVelocity -= accelerationRate;
+        if (currentVelocity < 0) currentVelocity = 0;
+
+        LeftSide.move_velocity(direction * currentVelocity);
+        RightSide.move_velocity(direction * currentVelocity);
+        delay(20);
+    }
+
+    // Stop the robot
     LeftSide.move_velocity(0);
     RightSide.move_velocity(0);
+
     logToSDCard("Drive", logFileName);
     delay(100);
-    while(is_Driving()) {delay(50);}
+    while (is_Driving()) { delay(50); }
     return 0;
 }
 
