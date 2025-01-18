@@ -35,6 +35,9 @@ TeamColor current_team = RED;  // Set to RED or BLUE based on your team
 bool driving = false;
 Stack stakeStack(2);
 
+bool intakeOn = false;
+bool intakeReverse = false;
+
 
 // Generate a new filename for the log file based on current timestamp
 string logFileName = "/usd/Log_File_" + getCurrentTimeStamp() + ".txt";
@@ -217,6 +220,20 @@ void visionTask() {
     }
 }
 
+void intakeTask() {
+    while(is_autonomous()){
+        if(intakeOn) {
+            if(intakeReverse) {
+                Intake.move_velocity(-600);
+            } else {
+                Intake.move_velocity(600);
+            }
+        } else {
+            Intake.brake();
+        }
+    }
+}
+
 
 
 
@@ -264,56 +281,34 @@ void drivePID(float driveFor) {
  * @param direction The desired driving direction, 1 for forward and -1 for backward
  * @returns int Returns 0 upon completion.
  */
-int AutoDrive(float cm, int direction) {
-    double posL = LeftSide.at(0).get_position();
-    double targetPos = convertUnits(cm, "cm", "rotations");
-    double maxVelocity = 200; // Maximum velocity
-    double accelerationRate = 10; // Velocity increment per step
-    double decelerationDistance = targetPos * 0.2; // 20% of the distance for deceleration
-    double currentVelocity = 0;
-
-    // Gradually accelerate
-    while (currentVelocity < maxVelocity && LeftSide.at(0).get_position() - posL < targetPos - decelerationDistance) {
-        currentVelocity += accelerationRate;
-        if (currentVelocity > maxVelocity) currentVelocity = maxVelocity;
-
-        LeftSide.move_velocity(direction * currentVelocity);
-        RightSide.move_velocity(direction * currentVelocity);
-        delay(20); // Adjust the delay for smoother acceleration
-    }
-
-    // Maintain max velocity until deceleration zone
-    while (LeftSide.at(0).get_position() - posL < targetPos - decelerationDistance) {
-        LeftSide.move_velocity(direction * maxVelocity);
-        RightSide.move_velocity(direction * maxVelocity);
-        delay(20);
-    }
-
-    // Gradually decelerate
-    while (LeftSide.at(0).get_position() - posL < targetPos) {
-        currentVelocity -= accelerationRate;
-        if (currentVelocity < 0) currentVelocity = 0;
-
-        LeftSide.move_velocity(direction * currentVelocity);
-        RightSide.move_velocity(direction * currentVelocity);
-        delay(20);
-    }
-
-    // Stop the robot
-    LeftSide.move_velocity(0);
-    RightSide.move_velocity(0);
-
-    logToSDCard("Drive", logFileName);
+int AutoDrive(float cm, int direction = 1, int speed = 200) {
+    LeftSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), speed);
+    RightSide.move_relative(direction*convertUnits(cm, "cm", "rotations"), -speed);
     delay(100);
-    while (is_Driving()) { delay(50); }
+    while(is_Driving()) {delay(50);}
     return 0;
 }
+
+/**
+ * Function to turn the robot to a specified heading using the PID controller.
+ * @param toHeading The desired heading to turn to.
+ */
+int turn(float toHeading, int direction = 1, float speed = 200) {
+    LeftSide.move_relative(direction*(toHeading/100), speed);
+    RightSide.move_relative(-direction*(toHeading/100), speed);
+    logToSDCard("Turn", logFileName);
+    delay(100);
+    while(is_Driving()) {delay(50);}
+    return 0;
+}
+ 
 
 // Autonomous
 void autonomous() {  
     // Start vision task in parallel
     //pros::Task vision_monitor(visionTask);
     //pros::Task flap_Wiggle(flapCheck);
+    Task intake_Task(intakeTask);
 
     if (learn == true) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
@@ -322,11 +317,20 @@ void autonomous() {
         //////////////////////////
         //      Autocode        //
         //////////////////////////
-        AutoDrive(95, -1);
-        drehenAufGrad(25); 
-        AutoDrive(21, -1);
+        AutoDrive(87, -1, 170);
+        turn(33); 
+        AutoDrive(27.5, -1, 80);
+        delay(20);
         piston.set_value(true);
-        AutoDrive(2, -1);
+        delay(20);
+        intakeOn = true;
+        turn(50, -1);
+        intakeReverse = true;
+        AutoDrive(20);
+        intakeReverse = false;
+        AutoDrive(10);
+        delay(500);
+        intakeReverse = true;
 
     }
     // Autonomous actions can continue here
@@ -353,7 +357,7 @@ void opcontrol() {
         while (true) {        
             // Print gyro heading to controller
             controller.clear();
-            //controller.print(0, 0, "Current Heading: %f", inertial.get_yaw());
+            controller.print(0, 0, "Current Heading: %f", inertial.get_heading());
 
 
           // Drive control
@@ -389,7 +393,7 @@ void opcontrol() {
                 Intake.move(0);    // Stop intake
             }
 
-            pros::delay(50);  // Delay to prevent excessive CPU usage
+            pros::delay(20);  // Delay to prevent excessive CPU usage
         }
     }
 }
