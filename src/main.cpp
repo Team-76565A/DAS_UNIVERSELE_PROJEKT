@@ -30,7 +30,10 @@ using namespace std;
 
 // Define team colors
 enum TeamColor { RED, BLUE };
-TeamColor current_team = RED;  // Set to RED or BLUE based on your team
+TeamColor current_team = BLUE;  // Set to RED or BLUE based on your team
+bool stakeSide = false;
+
+int team_color;
 
 bool driving = false;
 Stack stakeStack(2);
@@ -65,6 +68,9 @@ string logFileName = "/usd/Log_File_" + getCurrentTimeStamp() + ".txt";
 #define piston_PORT 'H'
 #define climb_PORT 'F'
 
+// Bumper Port
+#define lineTracker_Port 'D'
+
 // Sensor Ports
 #define gps_PORT 6
 #define inertial_PORT 18
@@ -98,6 +104,7 @@ Imu inertial(inertial_PORT);
 Vision up_vision_sensor(up_vision_PORT);
 Vision low_vision_sensor(low_vision_PORT);
 Rotation rotation_sensor(rotation_PORT);
+ADIAnalogIn intakeTracker(lineTracker_Port);
 
 
 bool is_Driving() {
@@ -249,6 +256,12 @@ void initialize() {
     low_vision_sensor.set_exposure(70);
     up_vision_sensor.set_exposure(70);
 
+    if(current_team == RED) {
+        team_color = -1;
+    } else if(current_team == BLUE) {
+        team_color = 1;
+    }
+
     // Set brake mode to active holding on position
     LeftSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);   // Brake mode for braking when Velocity = 0
     RightSide.set_brake_modes(E_MOTOR_BRAKE_HOLD);  // Brake mode for braking when Velocity = 0
@@ -294,12 +307,22 @@ int AutoDrive(float cm, int direction = 1, int speed = 200) {
  * @param toHeading The desired heading to turn to.
  */
 int turn(float toHeading, int direction = 1, float speed = 200) {
-    LeftSide.move_relative(direction*(toHeading/100), speed);
-    RightSide.move_relative(-direction*(toHeading/100), speed);
+    LeftSide.move_relative(team_color*direction*(toHeading/100), speed);
+    RightSide.move_relative(team_color*-direction*(toHeading/100), speed);
     logToSDCard("Turn", logFileName);
     delay(100);
     while(is_Driving()) {delay(50);}
     return 0;
+}
+
+/**
+ * Use Function 5 cm before Stake to get the best out of the function
+ */
+void driveToStake(int direction = 1) {
+    while(intakeTracker.get_value() > 2000) {
+        LeftSide.move_velocity(direction*50);
+        RightSide.move_velocity(direction*50);
+    }
 }
  
 
@@ -317,20 +340,49 @@ void autonomous() {
         //////////////////////////
         //      Autocode        //
         //////////////////////////
-        AutoDrive(87, -1, 170);
-        turn(33); 
-        AutoDrive(27.5, -1, 80);
-        delay(20);
-        piston.set_value(true);
-        delay(20);
-        intakeOn = true;
-        turn(50, -1);
-        intakeReverse = true;
-        AutoDrive(20);
-        intakeReverse = false;
-        AutoDrive(10);
-        delay(500);
-        intakeReverse = true;
+        if(stakeSide) {
+            AutoDrive(5, -1, 50);
+            AutoDrive(82.5, -1, 170);
+            turn(33); 
+            AutoDrive(21.7, -1, 80);    // Cm is in -5 cause of testing driveToStake
+            delay(200);
+            driveToStake(-1);
+            piston.set_value(true);
+            delay(20);
+            intakeOn = true;
+            turn(50, -1);
+            delay(500);
+            intakeReverse = true;
+            AutoDrive(20);
+            intakeOn = true;
+            intakeReverse = false;
+            AutoDrive(15);
+            delay(500);
+            intakeReverse = true;
+        } else {
+            AutoDrive(5, -1, 50);
+            AutoDrive(38, -1, 170);
+            driveToStake(-1);
+            piston.set_value(true);
+            intakeOn = true;
+            turn(80, -1);
+            delay(200);
+            intakeReverse = true;
+            delay(500);
+            intakeReverse = false;
+            AutoDrive(40, 1, 80);
+            AutoDrive(30,1,200);
+            delay(200);
+            intakeReverse = true;
+            turn(80, -1);
+            intakeReverse = false;
+            AutoDrive(20,1,170);
+            turn(40, -1);
+            intakeReverse = true;
+            delay(500);
+            intakeReverse = false;
+            AutoDrive(15, 1, 170);
+        }
 
     }
     // Autonomous actions can continue here
