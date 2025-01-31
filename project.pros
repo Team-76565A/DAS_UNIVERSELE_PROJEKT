@@ -1,7 +1,7 @@
 {
   "py/object": "pros.conductor.project.Project",
   "py/state": {
-    "project_name": "DAS UNIVERSELE PROJEKT",
+    "project_name": "DAS UNIVERSALE PROJEKT",
     "target": "v5",
     "templates": {
       "kernel": {

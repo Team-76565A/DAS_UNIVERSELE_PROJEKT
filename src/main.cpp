@@ -30,8 +30,9 @@ using namespace std;
 
 // Define team colors
 enum TeamColor { RED, BLUE };
-TeamColor current_team = BLUE;  // Set to RED or BLUE based on your team
-bool stakeSide = false;
+TeamColor current_team = RED;  // Set to RED or BLUE based on your team
+#define stakeSide true
+#define skills true
 
 int team_color;
 
@@ -45,7 +46,7 @@ bool intakeReverse = false;
 // Generate a new filename for the log file based on current timestamp
 string logFileName = "/usd/Log_File_" + getCurrentTimeStamp() + ".txt";
 
-#define normalStakeFlapPos 16500 // Set to normal Flap position + 4
+#define normalStakeFlapPos 5250 // Set to normal Flap position + 4
 #define maxHoldFlapPos 20000 // Set the max Flap position when holding an donut under it
 
 // ------------------ PORT DEFINE SECTION ------------------
@@ -252,6 +253,7 @@ void intakeTask() {
 void initialize() {
     pros::lcd::initialize();
     controller.clear(); // Clear screen
+    rotation_sensor.reset_position();
 
     low_vision_sensor.set_exposure(70);
     up_vision_sensor.set_exposure(70);
@@ -324,7 +326,55 @@ void driveToStake(int direction = 1) {
         RightSide.move_velocity(direction*50);
     }
 }
- 
+
+/**
+ * The Flapcheck if donut on Stake
+ */
+void intakeCheck() {
+    Position donutPosition = START;
+    int angle = rotation_sensor.get_position();
+    while (donutPosition != NONE) {
+        // Get the largest object detected by each sensor
+        vision_object_s_t low_obj = low_vision_sensor.get_by_size(0);
+        vision_object_s_t up_obj = up_vision_sensor.get_by_size(0);
+
+        angle = rotation_sensor.get_position();
+
+        // Check if both sensors detect a donut
+        if (low_obj.signature != VISION_OBJECT_ERR_SIG || up_obj.signature != VISION_OBJECT_ERR_SIG) {
+
+
+            // Determine the position of the donut
+            if (low_obj.width > 100 && low_obj.height > 80) {
+                donutPosition = DOWN;
+            } else if (up_obj.width > 100 && up_obj.height > 80) {
+                donutPosition = MIDDLE;
+            } else if (angle >= 7000) {
+                donutPosition = TOP;
+            } else {
+                donutPosition = NONE;
+            }
+        }
+    }
+}
+
+/**
+ * FLap Check
+ */
+void flapFree(int i = normalStakeFlapPos) {
+    int angle = rotation_sensor.get_position();
+    while(rotation_sensor.get_angle() >= i) {
+        delay(50);
+    }
+}
+
+void intake() {
+    intakeCheck();
+    intakeReverse = true;
+    flapFree();
+    intakeReverse = false;
+    flapFree();
+}
 
 // Autonomous
 void autonomous() {  
@@ -333,9 +383,9 @@ void autonomous() {
     //pros::Task flap_Wiggle(flapCheck);
     Task intake_Task(intakeTask);
 
-    if (learn == true) {
+    if(learn) {
         trainPIDConstants(180, inertial, LBWheel, LMWheel, LFWheel, RBWheel, RMWheel, RFWheel);
-    } else {
+    } else if(!learn && !skills){
 
         //////////////////////////
         //      Autocode        //
@@ -383,6 +433,41 @@ void autonomous() {
             intakeReverse = false;
             AutoDrive(15, 1, 170);
         }
+
+    } else if(!learn && skills) {
+        driveToStake(-1);
+        piston.set_value(true);
+        intakeOn = true;        
+        turn(47, -1);
+        intake(); // PreLoad
+        AutoDrive(35, 1, 170);
+        intake(); // Erster Donut
+        turn(45, -1);
+        intake(); // Flap Check for wrong donut
+        AutoDrive(30, 1, 170);
+        intake(); // Zweiter Donut
+        turn(90, -1);
+        intake(); // Flap Check for wrong donut
+        AutoDrive(30, 1, 170);
+        intake(); // Dritter Donut
+        turn(30);
+        intake(); // Flap Check for wrong donut
+        AutoDrive(60, 1, 170);
+        intake(); // Vierter Donut
+        turn(100, -1);
+        intake(); // Flap Check for wrong donut
+        AutoDrive(35, 1, 170);
+        intake(); // Fünfter Donut
+        turn(90, -1);
+        intake(); // Flap Check for wrong donut
+        AutoDrive(40, 1, 170);
+        intake(); // Sechster Donut
+        turn(150);
+        intake(); // Flap Check for wrong donut
+
+
+
+
 
     }
     // Autonomous actions can continue here
