@@ -46,7 +46,7 @@ bool intakeReverse = false;
 // Generate a new filename for the log file based on current timestamp
 string logFileName = "/usd/Log_File_" + getCurrentTimeStamp() + ".txt";
 
-#define normalStakeFlapPos 5250 // Set to normal Flap position + 4
+#define normalStakeFlapPos 5000 // Set to normal Flap position + 4
 #define maxHoldFlapPos 20000 // Set the max Flap position when holding an donut under it
 
 // ------------------ PORT DEFINE SECTION ------------------
@@ -345,15 +345,21 @@ void intakeCheck() {
 
 
             // Determine the position of the donut
-            if (low_obj.width > 100 && low_obj.height > 80) {
+            if (low_obj.width > 80 && low_obj.height > 80) {
                 donutPosition = DOWN;
-            } else if (up_obj.width > 100 && up_obj.height > 80) {
+            } else if (up_obj.width > 80 && up_obj.height > 80) {
                 donutPosition = MIDDLE;
-            } else if (angle >= 7000) {
+            } else if (angle >= 6000) {
                 donutPosition = TOP;
             } else {
                 donutPosition = NONE;
             }
+        }
+        
+        if(donutPosition == TOP2) {
+            intakeReverse = true;
+        } else {
+            intakeReverse = false;
         }
     }
 }
@@ -370,6 +376,10 @@ void flapFree(int i = normalStakeFlapPos) {
 
 void intake() {
     intakeCheck();
+    intakeReverse = true;
+    flapFree();
+    intakeReverse = false;
+    flapFree();
     intakeReverse = true;
     flapFree();
     intakeReverse = false;
@@ -462,10 +472,52 @@ void autonomous() {
         intake(); // Flap Check for wrong donut
         AutoDrive(40, 1, 170);
         intake(); // Sechster Donut
-        turn(150);
+        turn(145);
         intake(); // Flap Check for wrong donut
+        AutoDrive(75, -1, 170);
+        intake(); // Flap Check for wrong donut
+        piston.set_value(false); // First Stake corner
+
+        // Driving to second Stake
+        AutoDrive(20, 1, 170);
+        turn(140, 1);
+        AutoDrive(147.4, -1, 170);
+
+        // Second stake
+        driveToStake(-1);
+        piston.set_value(true);
+        AutoDrive(10, -1, 170);
+        turn(95, -1);
+        intake();
+        AutoDrive(60.96, 1, 170);
+        intake(); // First Donut
+        turn(85, -1);
+        intake();
+        AutoDrive(60.96, 1, 170);
+        intake(); // Second Donut
+        turn(90, -1);
+        intake();
+        AutoDrive(60.96, 1, 170);
+        intake();
+        AutoDrive(20, 1, 170);
+        intake();
+        turn(135, 1);
+        intake();
+        AutoDrive(28.28, 1, 170);
+        intake();
+        turn(75, 1);
+        intake();
+        AutoDrive(20, -1, 170);
+        intake();
+        piston.set_value(false);
 
 
+
+
+
+
+
+        
 
 
 

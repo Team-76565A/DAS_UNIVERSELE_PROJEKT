@@ -15,7 +15,7 @@ using namespace competition;
 using namespace std;
 
 
-enum Position {NONE, DOWN, MIDDLE, TOP, START};
+enum Position {NONE, DOWN, MIDDLE, TOP, TOP2, START};
 
 // Struct to hold position and color
 struct Donut {
